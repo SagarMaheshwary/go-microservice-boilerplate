@@ -12,7 +12,7 @@ func main() {
 
 	cfg, err := config.NewConfig()
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Fatal("%v", err)
 	}
 
 	log.Info("Hello World")

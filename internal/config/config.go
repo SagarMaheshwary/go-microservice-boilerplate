@@ -8,31 +8,29 @@ import (
 	"runtime"
 	"strconv"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofor-little/env"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/logger"
 )
 
+type LoaderOptions struct {
+	EnvPath   string
+	EnvLoader func(string) error
+	Logger    logger.Logger
+}
+
 type Config struct {
-	GRPCServer *GRPCServer
-	Database   *Database
+	GRPCServer *GRPCServer `validate:"required"`
+	Database   *Database   `validate:"required"`
 }
 
 type GRPCServer struct {
-	URL string
+	URL string `validate:"required,hostname_port"`
 }
 
 type Database struct {
-	Host     string
-	Port     int
-	Username string
-	Password string
-}
-
-type LoaderOptions struct {
-	EnvPath     string
-	EnvLoader   func(string) error
-	FileChecker func(string) bool
-	Logger      logger.Logger
+	URL      string `validate:"required,url"`
+	PoolSize int    `validate:"required,gt=0"`
 }
 
 func NewConfig() (*Config, error) {
@@ -49,36 +47,38 @@ func NewConfigWithOptions(opts LoaderOptions) (*Config, error) {
 
 	envLoader := opts.EnvLoader
 	if envLoader == nil {
-		envLoader = func(path string) error { return env.Load(path) }
-	}
-	fileChecker := opts.FileChecker
-	if fileChecker == nil {
-		fileChecker = func(path string) bool {
+		envLoader = func(path string) error {
 			_, err := os.Stat(path)
-			return err == nil
+			if err != nil {
+				return err
+			}
+
+			return env.Load(path)
 		}
 	}
 
-	if opts.EnvPath != "" && fileChecker(opts.EnvPath) {
-		if err := envLoader(opts.EnvPath); err != nil {
-			return nil, fmt.Errorf("failed to load .env: %w", err)
-		}
+	if err := envLoader(opts.EnvPath); err == nil {
 		log.Info("Loaded environment variables from %q", opts.EnvPath)
 	} else {
 		log.Info(".env file not found, using system environment variables")
 	}
 
-	return &Config{
+	cfg := &Config{
 		GRPCServer: &GRPCServer{
 			URL: getEnv("GRPC_SERVER_URL", ":5002"),
 		},
 		Database: &Database{
-			Host:     getEnv("DATABASE_HOST", "localhost"),
-			Port:     getEnvInt("DATABASE_PORT", 5432),
-			Username: getEnv("DATABASE_USERNAME", "postgres"),
-			Password: getEnv("DATABASE_PASSWORD", "password"),
+			URL:      getEnv("DATABASE_URL", ""),
+			PoolSize: getEnvInt("DATABASE_POOL_SIZE", 4),
 		},
-	}, nil
+	}
+
+	validate := validator.New()
+	if err := validate.Struct(cfg); err != nil {
+		return nil, fmt.Errorf("invalid config: %w", err)
+	}
+
+	return cfg, nil
 }
 
 func rootDir() string {
