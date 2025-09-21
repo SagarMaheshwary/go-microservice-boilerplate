@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofor-little/env"
@@ -29,8 +30,11 @@ type GRPCServer struct {
 }
 
 type Database struct {
-	URL      string `validate:"required,url"`
-	PoolSize int    `validate:"required,gt=0"`
+	DSN                 string        `validate:"required,url"`
+	Driver              string        `validate:"required,oneof=postgres mysql sqlite"`
+	PoolMaxIdleConns    int           `validate:"gte=0"`
+	PoolMaxOpenConns    int           `validate:"gte=0"`
+	PoolConnMaxLifetime time.Duration `validate:"gte=0"` // must be non-negative
 }
 
 func NewConfig() (*Config, error) {
@@ -68,8 +72,11 @@ func NewConfigWithOptions(opts LoaderOptions) (*Config, error) {
 			URL: getEnv("GRPC_SERVER_URL", ":5002"),
 		},
 		Database: &Database{
-			URL:      getEnv("DATABASE_URL", ""),
-			PoolSize: getEnvInt("DATABASE_POOL_SIZE", 4),
+			DSN:                 getEnv("DATABASE_DSN", ""),
+			Driver:              getEnv("DATABASE_DRIVER", "postgres"),
+			PoolMaxIdleConns:    getEnvInt("DATABASE_POOL_MAX_IDLE", 10),
+			PoolMaxOpenConns:    getEnvInt("DATABASE_POOL_MAX_OPEN", 100),
+			PoolConnMaxLifetime: getEnvDuration("DATABASE_POOL_MAX_LIFETIME", time.Hour),
 		},
 	}
 
@@ -98,6 +105,14 @@ func getEnv(key string, defaultVal string) string {
 
 func getEnvInt(key string, defaultVal int) int {
 	if val, err := strconv.Atoi(os.Getenv(key)); err == nil {
+		return val
+	}
+
+	return defaultVal
+}
+
+func getEnvDuration(key string, defaultVal time.Duration) time.Duration {
+	if val, err := time.ParseDuration(os.Getenv(key)); err == nil {
 		return val
 	}
 

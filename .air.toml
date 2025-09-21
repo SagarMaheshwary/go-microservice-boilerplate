@@ -1,0 +1,33 @@
+# Config file for [Air](https://github.com/cosmtrek/air) in TOML format
+
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/main ./cmd/server/main.go"
+  bin = "tmp/main"
+  full_bin = "APP_ENV=dev APP_USER=air ./tmp/main"
+  include_ext = ["go", "env"]
+  exclude_dir = ["tmp", "assets", "vendor", "bin", "build", "deploy"]
+  include_dir = []
+  exclude_regex = ["_test.go"]
+  exclude_file = []
+  exclude_unchanged = true
+  log = "air.log"
+  args_bin = []
+  stop_on_error = true
+  send_interrupt = false
+  delay = 1000
+  kill_delay = 500
+
+[log]
+  time = false
+
+[color]
+  main = "magenta"
+  watcher = "cyan"
+  build = "yellow"
+  runner = "green"
+
+[misc]
+  clean_on_exit = false

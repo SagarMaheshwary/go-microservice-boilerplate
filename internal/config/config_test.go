@@ -3,6 +3,7 @@ package config_test
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/gofor-little/env"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/config"
@@ -11,32 +12,28 @@ import (
 )
 
 // clearEnv is a helper that removes the provided environment variables.
-// This ensures each test runs in a clean environment.
 func clearEnv(keys ...string) {
 	for _, k := range keys {
 		os.Unsetenv(k)
 	}
 }
 
-// TestNewConfigWithDefaults verifies that if required environment variables
-// are missing, config validation fails.
+// TestNewConfigWithDefaults ensures required fields missing cause validation error.
 func TestNewConfigWithDefaults(t *testing.T) {
-	clearEnv("GRPC_SERVER_URL", "DATABASE_URL", "DATABASE_POOL_SIZE")
-
 	_, err := config.NewConfigWithOptions(config.LoaderOptions{})
 	require.Error(t, err)
 }
 
-// TestNewConfigWithEnvFile verifies that configuration can be loaded from
-// a .env file using a custom EnvLoader.
+// TestNewConfigWithEnvFile verifies config loads from .env file.
 func TestNewConfigWithEnvFile(t *testing.T) {
-	clearEnv("GRPC_SERVER_URL", "DATABASE_URL", "DATABASE_POOL_SIZE")
-
-	// Create a temporary .env file with test values.
+	// Create a temporary .env file
 	content := []byte(`
 	GRPC_SERVER_URL=127.0.0.1:6000
-	DATABASE_URL=postgres://user:pass@localhost:5432/envdb
-	DATABASE_POOL_SIZE=12`)
+	DATABASE_DSN=postgres://user:pass@localhost:5432/envdb
+	DATABASE_DRIVER=postgres
+	DATABASE_POOL_MAX_IDLE=5
+	DATABASE_POOL_MAX_OPEN=20
+	DATABASE_POOL_MAX_LIFETIME=15m`)
 
 	tmpFile, err := os.CreateTemp("", "test.env")
 	require.NoError(t, err)
@@ -46,7 +43,6 @@ func TestNewConfigWithEnvFile(t *testing.T) {
 	require.NoError(t, err)
 	tmpFile.Close()
 
-	// Use the real env.Load for this test.
 	envLoader := func(path string) error {
 		return env.Load(path)
 	}
@@ -58,69 +54,83 @@ func TestNewConfigWithEnvFile(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "127.0.0.1:6000", cfg.GRPCServer.URL)
-	assert.Equal(t, "postgres://user:pass@localhost:5432/envdb", cfg.Database.URL)
-	assert.Equal(t, 12, cfg.Database.PoolSize)
+	assert.Equal(t, "postgres://user:pass@localhost:5432/envdb", cfg.Database.DSN)
+	assert.Equal(t, "postgres", cfg.Database.Driver)
+	assert.Equal(t, 5, cfg.Database.PoolMaxIdleConns)
+	assert.Equal(t, 20, cfg.Database.PoolMaxOpenConns)
+	assert.Equal(t, 15*time.Minute, cfg.Database.PoolConnMaxLifetime)
 }
 
-// TestNewConfigWithValidEnv verifies that configuration loads successfully
-// when valid environment variables are present.
+// TestNewConfigWithValidEnv ensures valid env vars produce a valid config.
 func TestNewConfigWithValidEnv(t *testing.T) {
-	clearEnv("GRPC_SERVER_URL", "DATABASE_URL", "DATABASE_POOL_SIZE")
-
 	os.Setenv("GRPC_SERVER_URL", "localhost:50051")
-	os.Setenv("DATABASE_URL", "postgres://user:pass@localhost:5432/db")
-	os.Setenv("DATABASE_POOL_SIZE", "15")
+	os.Setenv("DATABASE_DSN", "postgres://user:pass@localhost:5432/db")
+	os.Setenv("DATABASE_DRIVER", "mysql")
+	os.Setenv("DATABASE_POOL_MAX_IDLE", "3")
+	os.Setenv("DATABASE_POOL_MAX_OPEN", "12")
+	os.Setenv("DATABASE_POOL_MAX_LIFETIME", "45s")
 
 	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{})
 	require.NoError(t, err)
-	require.NotNil(t, cfg)
 
 	assert.Equal(t, "localhost:50051", cfg.GRPCServer.URL)
-	assert.Equal(t, "postgres://user:pass@localhost:5432/db", cfg.Database.URL)
-	assert.Equal(t, 15, cfg.Database.PoolSize)
+	assert.Equal(t, "postgres://user:pass@localhost:5432/db", cfg.Database.DSN)
+	assert.Equal(t, "mysql", cfg.Database.Driver)
+	assert.Equal(t, 3, cfg.Database.PoolMaxIdleConns)
+	assert.Equal(t, 12, cfg.Database.PoolMaxOpenConns)
+	assert.Equal(t, 45*time.Second, cfg.Database.PoolConnMaxLifetime)
 }
 
-// TestNewConfigWithInvalidDatabaseURL verifies that validation fails if
-// DATABASE_URL is not a valid URL.
+// TestNewConfigWithInvalidDatabaseURL ensures validation fails with bad DSN.
 func TestNewConfigWithInvalidDatabaseURL(t *testing.T) {
-	clearEnv("GRPC_SERVER_URL", "DATABASE_URL", "DATABASE_POOL_SIZE")
-
 	os.Setenv("GRPC_SERVER_URL", "localhost:50051")
-	os.Setenv("DATABASE_URL", "://not-a-url") // invalid
-	os.Setenv("DATABASE_POOL_SIZE", "10")
+	os.Setenv("DATABASE_DSN", "://not-a-url")
+	os.Setenv("DATABASE_DRIVER", "postgres")
 
 	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{})
 	require.Error(t, err)
 	require.Nil(t, cfg)
 }
 
-// TestNewConfigWithInvalidPoolSize verifies that validation fails if
-// DATABASE_POOL_SIZE does not meet the "gt=0" constraint.
-func TestNewConfigWithInvalidPoolSize(t *testing.T) {
-	clearEnv("GRPC_SERVER_URL", "DATABASE_URL", "DATABASE_POOL_SIZE")
-
+// TestNewConfigWithInvalidDriver ensures unsupported driver fails validation.
+func TestNewConfigWithInvalidDriver(t *testing.T) {
 	os.Setenv("GRPC_SERVER_URL", "localhost:50051")
-	os.Setenv("DATABASE_URL", "postgres://user:pass@localhost:5432/db")
-	os.Setenv("DATABASE_POOL_SIZE", "0") // invalid (must be > 0)
+	os.Setenv("DATABASE_DSN", "postgres://user:pass@localhost:5432/db")
+	os.Setenv("DATABASE_DRIVER", "oracle") // not allowed
 
 	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{})
 	require.Error(t, err)
 	require.Nil(t, cfg)
 }
 
-// TestNewConfigWithDefaultsApplied verifies that default values are applied
-// when optional environment variables are missing.
-func TestNewConfigWithDefaultsApplied(t *testing.T) {
-	clearEnv("GRPC_SERVER_URL", "DATABASE_URL", "DATABASE_POOL_SIZE")
+// TestNewConfigWithInvalidPoolLifetime ensures invalid duration falls back.
+func TestNewConfigWithInvalidPoolLifetime(t *testing.T) {
+	clearEnv("GRPC_SERVER_URL", "DATABASE_DSN", "DATABASE_DRIVER", "DATABASE_POOL_MAX_IDLE", "DATABASE_POOL_MAX_OPEN", "DATABASE_POOL_MAX_LIFETIME")
 
-	// Only set the required DATABASE_URL.
-	os.Setenv("DATABASE_URL", "postgres://user:pass@localhost:5432/db")
+	os.Setenv("GRPC_SERVER_URL", "localhost:50051")
+	os.Setenv("DATABASE_DSN", "postgres://user:pass@localhost:5432/db")
+	os.Setenv("DATABASE_POOL_MAX_LIFETIME", "notaduration")
 
 	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{})
 	require.NoError(t, err)
 
-	// GRPC_SERVER_URL should fallback to default ":5002".
+	// Should fall back to default (1h from your config code)
+	assert.Equal(t, time.Hour, cfg.Database.PoolConnMaxLifetime)
+}
+
+// TestNewConfigWithDefaultsApplied ensures defaults are applied for optional fields.
+func TestNewConfigWithDefaultsApplied(t *testing.T) {
+	clearEnv("GRPC_SERVER_URL", "DATABASE_DSN", "DATABASE_DRIVER", "DATABASE_POOL_MAX_IDLE", "DATABASE_POOL_MAX_OPEN", "DATABASE_POOL_MAX_LIFETIME")
+
+	// Only set required DATABASE_DSN.
+	os.Setenv("DATABASE_DSN", "postgres://user:pass@localhost:5432/db")
+
+	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{})
+	require.NoError(t, err)
+
 	assert.Equal(t, ":5002", cfg.GRPCServer.URL)
-	// DATABASE_POOL_SIZE should fallback to 4.
-	assert.Equal(t, 4, cfg.Database.PoolSize)
+	assert.Equal(t, "postgres", cfg.Database.Driver) // default
+	assert.Equal(t, 10, cfg.Database.PoolMaxIdleConns)
+	assert.Equal(t, 100, cfg.Database.PoolMaxOpenConns)
+	assert.Equal(t, time.Hour, cfg.Database.PoolConnMaxLifetime)
 }
