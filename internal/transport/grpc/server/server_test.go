@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"bytes"
+	"io"
 	"testing"
 	"time"
 
@@ -17,8 +18,7 @@ const bufSize = 1024 * 1024
 
 // TestNewServer ensures a GRPCServer struct is created with correct dependencies.
 func TestNewServer(t *testing.T) {
-	var buf bytes.Buffer
-	log := logger.NewZerologLogger("info", &buf)
+	log := logger.NewZerologLogger("info", io.Discard)
 	cfg := &config.GRPCServer{}
 
 	srv := server.NewServer(&server.Opts{

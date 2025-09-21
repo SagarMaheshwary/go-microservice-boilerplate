@@ -1,26 +1,33 @@
 package config_test
 
 import (
+	"io"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/gofor-little/env"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/config"
+	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // clearEnv is a helper that removes the provided environment variables.
 func clearEnv(keys ...string) {
+	log := logger.NewZerologLogger("info", io.Discard)
 	for _, k := range keys {
-		os.Unsetenv(k)
+		if err := os.Unsetenv(k); err != nil {
+			log.Error("%v", err)
+		}
 	}
 }
 
 // TestNewConfigWithDefaults ensures required fields missing cause validation error.
 func TestNewConfigWithDefaults(t *testing.T) {
-	_, err := config.NewConfigWithOptions(config.LoaderOptions{})
+	_, err := config.NewConfigWithOptions(config.LoaderOptions{
+		Logger: logger.NewZerologLogger("info", io.Discard),
+	})
 	require.Error(t, err)
 }
 
@@ -50,6 +57,7 @@ func TestNewConfigWithEnvFile(t *testing.T) {
 	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{
 		EnvPath:   tmpFile.Name(),
 		EnvLoader: envLoader,
+		Logger:    logger.NewZerologLogger("info", io.Discard),
 	})
 	require.NoError(t, err)
 
@@ -70,7 +78,9 @@ func TestNewConfigWithValidEnv(t *testing.T) {
 	os.Setenv("DATABASE_POOL_MAX_OPEN", "12")
 	os.Setenv("DATABASE_POOL_MAX_LIFETIME", "45s")
 
-	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{})
+	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{
+		Logger: logger.NewZerologLogger("info", io.Discard),
+	})
 	require.NoError(t, err)
 
 	assert.Equal(t, "localhost:50051", cfg.GRPCServer.URL)
@@ -87,7 +97,9 @@ func TestNewConfigWithInvalidDatabaseURL(t *testing.T) {
 	os.Setenv("DATABASE_DSN", "://not-a-url")
 	os.Setenv("DATABASE_DRIVER", "postgres")
 
-	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{})
+	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{
+		Logger: logger.NewZerologLogger("info", io.Discard),
+	})
 	require.Error(t, err)
 	require.Nil(t, cfg)
 }
@@ -98,7 +110,9 @@ func TestNewConfigWithInvalidDriver(t *testing.T) {
 	os.Setenv("DATABASE_DSN", "postgres://user:pass@localhost:5432/db")
 	os.Setenv("DATABASE_DRIVER", "oracle") // not allowed
 
-	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{})
+	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{
+		Logger: logger.NewZerologLogger("info", io.Discard),
+	})
 	require.Error(t, err)
 	require.Nil(t, cfg)
 }
@@ -111,7 +125,9 @@ func TestNewConfigWithInvalidPoolLifetime(t *testing.T) {
 	os.Setenv("DATABASE_DSN", "postgres://user:pass@localhost:5432/db")
 	os.Setenv("DATABASE_POOL_MAX_LIFETIME", "notaduration")
 
-	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{})
+	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{
+		Logger: logger.NewZerologLogger("info", io.Discard),
+	})
 	require.NoError(t, err)
 
 	// Should fall back to default (1h from your config code)
@@ -125,7 +141,9 @@ func TestNewConfigWithDefaultsApplied(t *testing.T) {
 	// Only set required DATABASE_DSN.
 	os.Setenv("DATABASE_DSN", "postgres://user:pass@localhost:5432/db")
 
-	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{})
+	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{
+		Logger: logger.NewZerologLogger("info", io.Discard),
+	})
 	require.NoError(t, err)
 
 	assert.Equal(t, ":5002", cfg.GRPCServer.URL)

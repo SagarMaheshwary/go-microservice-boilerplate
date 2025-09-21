@@ -1,7 +1,7 @@
 package database_test
 
 import (
-	"os"
+	"io"
 	"testing"
 
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/config"
@@ -12,8 +12,7 @@ import (
 
 // Test that a supported driver (sqlite) creates a working DB connection
 func TestNew_SupportedDriver_SQLite(t *testing.T) {
-	log := logger.NewZerologLogger("info", os.Stderr)
-
+	log := logger.NewZerologLogger("info", io.Discard)
 	db, err := database.NewDatabase(&database.Opts{
 		Config: &config.Database{DSN: ":memory:", Driver: "sqlite"},
 		Logger: log,
@@ -32,7 +31,7 @@ func TestNew_SupportedDriver_SQLite(t *testing.T) {
 
 // Test unsupported driver returns error
 func TestNew_UnsupportedDriver(t *testing.T) {
-	log := logger.NewZerologLogger("info", os.Stderr)
+	log := logger.NewZerologLogger("info", io.Discard)
 	db, err := database.NewDatabase(&database.Opts{
 		Config: &config.Database{DSN: "some-dsn", Driver: "mongo"},
 		Logger: log,
@@ -43,7 +42,7 @@ func TestNew_UnsupportedDriver(t *testing.T) {
 
 // Test invalid DSN
 func TestNew_InvalidDSN(t *testing.T) {
-	log := logger.NewZerologLogger("info", os.Stderr)
+	log := logger.NewZerologLogger("info", io.Discard)
 	// For sqlite, an empty string is invalid
 	db, err := database.NewDatabase(&database.Opts{
 		Config: &config.Database{DSN: "", Driver: "sqlite"},
