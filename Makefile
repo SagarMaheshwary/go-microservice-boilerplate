@@ -31,10 +31,10 @@ docker-build-dev: ## Build docker image for development (hot reload via air)
 docker-build-prod: ## Build docker image for production (binary)
 	docker build --target production -t $(APP_NAME):latest .
 
-docker-run-dev: ## Run docker container in development mode
+docker-run-dev: docker-build-dev ## Run docker container in development mode
 	docker run -it --rm -p 5000:5000 -v $$(pwd):/app $(APP_NAME):dev
 
-docker-run-prod: ## Run docker container in production mode (default by, it will mount .env file to the container)
+docker-run-prod: docker-build-prod ## Run docker container in production mode
 	docker run -it --rm -p 5000:5000 -v .env:/app/.env $(APP_NAME):latest
 
 docker-test: ## Run tests inside docker (production build)

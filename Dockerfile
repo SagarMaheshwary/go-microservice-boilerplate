@@ -6,28 +6,24 @@ COPY go.mod go.sum ./
 
 COPY . .
 
-RUN go mod download
-
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /build/main ./cmd/server/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/main ./cmd/server/main.go
 
 FROM alpine:3.22 AS production
 
 WORKDIR /app
-
-COPY --from=builder /build/main /app/main
+COPY --from=builder /app/main .
 
 EXPOSE 5000
+CMD ["./main"]
 
-CMD [ "./main" ]
-
-FROM builder AS development
+FROM golang:1.25 AS development
 
 WORKDIR /app
 
-COPY --from=builder /app /app
+COPY . .
 
 RUN go install github.com/air-verse/air@v1.52.3
+RUN go mod download
 
 EXPOSE 5000
-
 CMD ["air", "-c", ".air.toml"]

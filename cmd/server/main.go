@@ -7,7 +7,7 @@ import (
 	"os/signal"
 
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/config"
-	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database"
+	// "github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database" UNCOMMENT TO USE DATABASE
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/logger"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transport/grpc/server"
 	"google.golang.org/grpc"
@@ -24,18 +24,18 @@ func main() {
 		log.Fatal("%v", err)
 	}
 
-	db, err := database.NewDatabase(&database.Opts{
-		Config: cfg.Database,
-		Logger: log,
-	})
-	if err != nil {
-		log.Fatal("%v", err)
-	}
+	//UNCOMMENT TO USE DATABASE
+	// db, err := database.NewDatabase(&database.Opts{
+	// 	Config: cfg.Database,
+	// 	Logger: log,
+	// })
+	// if err != nil {
+	// 	log.Fatal("%v", err)
+	// }
 
 	grpcServer := server.NewServer(&server.Opts{
-		Config:   cfg.GRPCServer,
-		Logger:   log,
-		Database: db,
+		Config: cfg.GRPCServer,
+		Logger: log,
 	})
 	go func() {
 		err = grpcServer.Serve()
@@ -49,9 +49,11 @@ func main() {
 	log.Warn("Shutdown signal received, closing services!")
 
 	grpcServer.Server.GracefulStop()
-	if err := db.Close(); err != nil {
-		log.Error("failed to close database client: %v", err)
-	}
+
+	//UNCOMMENT TO USE DATABASE
+	// if err := db.Close(); err != nil {
+	// 	log.Error("failed to close database client: %v", err)
+	// }
 
 	log.Info("Shutdown complete!")
 }
