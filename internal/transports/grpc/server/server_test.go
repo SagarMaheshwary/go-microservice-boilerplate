@@ -8,7 +8,7 @@ import (
 
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/config"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/logger"
-	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transport/grpc/server"
+	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/test/bufconn"

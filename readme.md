@@ -35,7 +35,7 @@ git clone https://github.com/SagarMaheshwary/go-microservice-boilerplate.git
 cd go-microservice-boilerplate
 ```
 
-2. Setup environment variables
+2. Setup environment variables (The application falls back to system environment variables if a `.env` file is not found—useful in Kubernetes where variables are mounted via ConfigMaps/Secrets.)
 
 Copy the example environment file and adjust values as needed:
 
@@ -102,13 +102,20 @@ make docker-test
 
 ```bash
 .
-├── proto/          # Protobuf files and generated code
+├── proto/          # Protobuf definitions and generated code
 ├── cmd/            # Service entrypoint (main.go)
-├── internal/       # Application code (config, database, server, etc.)
-├── Dockerfile      # Multi-stage build (dev/prod)
-├── Makefile        # Useful commands
-├── .env.example    # Example environment config
-└── README.md
+├── internal/           # Core application code
+│   ├── config/         # Load and manage environment configurations
+│   ├── database/       # Database initialization and connection handling
+│   ├── logger/         # Zerolog-based structured logging
+│   └── transports/         # Different communication protocols (e.g grpc, http, websocket). Each protocol can include both server/ and client/ implementations to keep responsibilities organized.
+│       ├── grpc/           # gRPC transport
+│       │   ├── server/     # gRPC server setup and service registration
+│       │   └── client/     # (Optional) Place for gRPC clients (e.g., microservice-to-microservice communication)
+├── Dockerfile      # Multi-stage build for dev/prod
+├── Makefile        # Workflow automation (build, run, test, docker)
+├── .env.example    # Example environment variables
+└── README.md       # Project documentation
 ```
 
 ## Test gRPC
@@ -116,7 +123,7 @@ make docker-test
 After running the app (e.g via make docker-run-dev), you can test the example RPC using [grpcurl](https://github.com/fullstorydev/grpcurl)
 
 ```bash
-grpcurl -proto ./proto/example.proto -plaintext localhost:5000 example.Example/Hello
+grpcurl -proto ./proto/hello_world/hello_world.proto -plaintext localhost:5000 hello_world.Greeter/SayHello
 ```
 
 Expected response:

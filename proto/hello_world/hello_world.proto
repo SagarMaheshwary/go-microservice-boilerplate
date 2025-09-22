@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package hello_world;
+
+option go_package = "github.com/SagarMaheshwary/go-microservice-boilerplate/proto/hello_world";
+
+service Greeter {
+  rpc SayHello(SayHelloRequest) returns (SayHelloResponse);
+}
+
+message SayHelloRequest {}
+
+message SayHelloResponse {
+  string message = 1;
+}

@@ -9,7 +9,7 @@ import (
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/config"
 	// "github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database" UNCOMMENT TO USE DATABASE
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/logger"
-	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transport/grpc/server"
+	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server"
 	"google.golang.org/grpc"
 )
 
