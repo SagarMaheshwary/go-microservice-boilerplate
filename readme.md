@@ -111,6 +111,8 @@ make docker-test
 │   └── transports/         # Different communication protocols (e.g grpc, http, websocket). Each protocol can include both server/ and client/ implementations to keep responsibilities organized.
 │       ├── grpc/           # gRPC transport
 │       │   ├── server/     # gRPC server setup and service registration
+│       │   │   ├── handler/         # RPC handlers
+│       │   │   ├── interceptor/     # gRPC interceptors
 │       │   └── client/     # (Optional) Place for gRPC clients (e.g., microservice-to-microservice communication)
 ├── Dockerfile      # Multi-stage build for dev/prod
 ├── Makefile        # Workflow automation (build, run, test, docker)
