@@ -1,4 +1,4 @@
-package server_test
+package handler_test
 
 import (
 	"context"
@@ -7,14 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server"
+	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server/handler"
 	helloworld "github.com/sagarmaheshwary/go-microservice-boilerplate/proto/hello_world"
 )
 
 // TestSayHello_Success verifies that the SayHello RPC
 // returns the expected response without error.
 func TestSayHello_Success(t *testing.T) {
-	s := &server.GreeterServer{}
+	s := &handler.GreeterServer{}
 
 	req := &helloworld.SayHelloRequest{}
 
@@ -28,7 +28,7 @@ func TestSayHello_Success(t *testing.T) {
 // TestSayHello_EmptyName verifies that even if the request has no name,
 // the RPC still returns a valid response (current implementation ignores Name).
 func TestSayHello_EmptyName(t *testing.T) {
-	s := &server.GreeterServer{}
+	s := &handler.GreeterServer{}
 
 	req := &helloworld.SayHelloRequest{} // no name
 
