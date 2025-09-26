@@ -62,9 +62,9 @@ func NewConfigWithOptions(opts LoaderOptions) (*Config, error) {
 	}
 
 	if err := envLoader(opts.EnvPath); err == nil {
-		log.Info("Loaded environment variables from %q", opts.EnvPath)
+		log.Info("Loaded environment variables from" + opts.EnvPath)
 	} else {
-		log.Info(".env file not found, using system environment variables")
+		log.Info("failed to load .env file, using system environment variables")
 	}
 
 	cfg := &Config{

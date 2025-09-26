@@ -8,12 +8,17 @@ import (
 )
 
 type Logger interface {
-	Info(msg string, args ...interface{})
-	Warn(msg string, args ...interface{})
-	Debug(msg string, args ...interface{})
-	Error(msg string, args ...interface{})
-	Fatal(msg string, args ...interface{})
-	Panic(msg string, args ...interface{})
+	Info(msg string, fields ...Field)
+	Warn(msg string, fields ...Field)
+	Debug(msg string, fields ...Field)
+	Error(msg string, fields ...Field)
+	Fatal(msg string, fields ...Field)
+	Panic(msg string, fields ...Field)
+}
+
+type Field struct {
+	Key   string
+	Value interface{}
 }
 
 type ZerologLogger struct {
@@ -35,9 +40,50 @@ func NewZerologLogger(level string, out io.Writer) *ZerologLogger {
 	return &ZerologLogger{log: l}
 }
 
-func (l *ZerologLogger) Info(msg string, args ...interface{})  { l.log.Info().Msgf(msg, args...) }
-func (l *ZerologLogger) Warn(msg string, args ...interface{})  { l.log.Warn().Msgf(msg, args...) }
-func (l *ZerologLogger) Debug(msg string, args ...interface{}) { l.log.Debug().Msgf(msg, args...) }
-func (l *ZerologLogger) Error(msg string, args ...interface{}) { l.log.Error().Msgf(msg, args...) }
-func (l *ZerologLogger) Fatal(msg string, args ...interface{}) { l.log.Fatal().Msgf(msg, args...) }
-func (l *ZerologLogger) Panic(msg string, args ...interface{}) { l.log.Panic().Msgf(msg, args...) }
+func (l *ZerologLogger) Info(msg string, fields ...Field) {
+	e := l.log.Info()
+	for _, f := range fields {
+		e.Interface(f.Key, f.Value)
+	}
+	e.Msg(msg)
+}
+
+func (l *ZerologLogger) Warn(msg string, fields ...Field) {
+	e := l.log.Warn()
+	for _, f := range fields {
+		e.Interface(f.Key, f.Value)
+	}
+	e.Msg(msg)
+}
+
+func (l *ZerologLogger) Debug(msg string, fields ...Field) {
+	e := l.log.Debug()
+	for _, f := range fields {
+		e.Interface(f.Key, f.Value)
+	}
+	e.Msg(msg)
+}
+
+func (l *ZerologLogger) Error(msg string, fields ...Field) {
+	e := l.log.Error()
+	for _, f := range fields {
+		e.Interface(f.Key, f.Value)
+	}
+	e.Msg(msg)
+}
+
+func (l *ZerologLogger) Fatal(msg string, fields ...Field) {
+	e := l.log.Fatal()
+	for _, f := range fields {
+		e.Interface(f.Key, f.Value)
+	}
+	e.Msg(msg)
+}
+
+func (l *ZerologLogger) Panic(msg string, fields ...Field) {
+	e := l.log.Panic()
+	for _, f := range fields {
+		e.Interface(f.Key, f.Value)
+	}
+	e.Msg(msg)
+}

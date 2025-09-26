@@ -21,7 +21,7 @@ func main() {
 
 	cfg, err := config.NewConfig()
 	if err != nil {
-		log.Fatal("%v", err)
+		log.Fatal(err.Error())
 	}
 
 	//UNCOMMENT TO USE DATABASE

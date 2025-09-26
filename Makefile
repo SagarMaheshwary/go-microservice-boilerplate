@@ -22,7 +22,7 @@ run-dev: ## Run the app locally with air (requires air installed, https://github
 	air
 
 test: ## Run tests locally
-	go test ./... -v
+	go test ./internal/... -v
 
 # Docker targets
 docker-build-dev: ## Build docker image for development (hot reload via air)
@@ -37,8 +37,8 @@ docker-run-dev: docker-build-dev ## Run docker container in development mode
 docker-run-prod: docker-build-prod ## Run docker container in production mode
 	docker run -it --rm -p 5000:5000 -v .env:/app/.env $(APP_NAME):latest
 
-docker-test: ## Run tests inside docker (production build)
-	docker run --rm $(APP_NAME):dev go test ./... -v
+docker-test: docker-build-dev ## Run tests inside docker
+	docker run --rm $(APP_NAME):dev go test ./internal/... -v
 
 clean:
 	rm -rf bin

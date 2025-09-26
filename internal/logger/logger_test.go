@@ -33,11 +33,12 @@ func TestNewZerologLogger_DefaultLevel(t *testing.T) {
 	var buf bytes.Buffer
 	l := logger.NewZerologLogger("invalid-level", &buf)
 
-	l.Info("hello %s", "world")
+	l.Info("hello world", logger.Field{Key: "foo", Value: "bar"})
 
 	entry := parseLog(t, &buf)
 	assert.Equal(t, "info", entry["level"])
 	assert.Equal(t, "hello world", entry["message"])
+	assert.Equal(t, "bar", entry["foo"])
 }
 
 // TestNewZerologLogger_DebugLevel ensures that when the level is set to "debug",
@@ -46,11 +47,12 @@ func TestNewZerologLogger_DebugLevel(t *testing.T) {
 	var buf bytes.Buffer
 	l := logger.NewZerologLogger("debug", &buf)
 
-	l.Debug("debug %d", 123)
+	l.Debug("debugging", logger.Field{Key: "count", Value: 123})
 
 	entry := parseLog(t, &buf)
 	assert.Equal(t, "debug", entry["level"])
-	assert.Equal(t, "debug 123", entry["message"])
+	assert.Equal(t, "debugging", entry["message"])
+	assert.Equal(t, float64(123), entry["count"]) // JSON numbers decode as float64
 }
 
 // TestLogger_Info verifies that Info messages appear with the correct level and message.
@@ -58,11 +60,12 @@ func TestLogger_Info(t *testing.T) {
 	var buf bytes.Buffer
 	l := logger.NewZerologLogger("info", &buf)
 
-	l.Info("info message %d", 1)
+	l.Info("info message", logger.Field{Key: "id", Value: 1})
 
 	entry := parseLog(t, &buf)
 	assert.Equal(t, "info", entry["level"])
-	assert.Equal(t, "info message 1", entry["message"])
+	assert.Equal(t, "info message", entry["message"])
+	assert.Equal(t, float64(1), entry["id"])
 }
 
 // TestLogger_Warn verifies that Warn messages appear with the correct level and message.
@@ -70,11 +73,12 @@ func TestLogger_Warn(t *testing.T) {
 	var buf bytes.Buffer
 	l := logger.NewZerologLogger("warn", &buf)
 
-	l.Warn("warn message %s", "X")
+	l.Warn("warn message", logger.Field{Key: "tag", Value: "X"})
 
 	entry := parseLog(t, &buf)
 	assert.Equal(t, "warn", entry["level"])
-	assert.Equal(t, "warn message X", entry["message"])
+	assert.Equal(t, "warn message", entry["message"])
+	assert.Equal(t, "X", entry["tag"])
 }
 
 // TestLogger_Debug verifies that Debug messages appear with the correct level and message.
@@ -82,11 +86,12 @@ func TestLogger_Debug(t *testing.T) {
 	var buf bytes.Buffer
 	l := logger.NewZerologLogger("debug", &buf)
 
-	l.Debug("debug message %d", 42)
+	l.Debug("debugging", logger.Field{Key: "num", Value: 42})
 
 	entry := parseLog(t, &buf)
 	assert.Equal(t, "debug", entry["level"])
-	assert.Equal(t, "debug message 42", entry["message"])
+	assert.Equal(t, "debugging", entry["message"])
+	assert.Equal(t, float64(42), entry["num"])
 }
 
 // TestLogger_Error verifies that Error messages appear with the correct level and message.
@@ -94,11 +99,12 @@ func TestLogger_Error(t *testing.T) {
 	var buf bytes.Buffer
 	l := logger.NewZerologLogger("error", &buf)
 
-	l.Error("error message %s", "oops")
+	l.Error("error happened", logger.Field{Key: "err", Value: "oops"})
 
 	entry := parseLog(t, &buf)
 	assert.Equal(t, "error", entry["level"])
-	assert.Equal(t, "error message oops", entry["message"])
+	assert.Equal(t, "error happened", entry["message"])
+	assert.Equal(t, "oops", entry["err"])
 }
 
 // TestLogger_Panic verifies that Panic messages are logged AND that the method panics.
@@ -107,13 +113,11 @@ func TestLogger_Panic(t *testing.T) {
 	l := logger.NewZerologLogger("panic", &buf)
 
 	assert.Panics(t, func() {
-		l.Panic("panic message %s", "boom")
+		l.Panic("panic message", logger.Field{Key: "boom", Value: true})
 	})
 
 	entry := parseLog(t, &buf)
 	assert.Equal(t, "panic", entry["level"])
-	assert.Equal(t, "panic message boom", entry["message"])
+	assert.Equal(t, "panic message", entry["message"])
+	assert.Equal(t, true, entry["boom"])
 }
-
-// We deliberately skip Fatal because it calls os.Exit(1)
-// and would stop the entire test process.

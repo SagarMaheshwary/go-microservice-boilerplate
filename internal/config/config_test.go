@@ -18,7 +18,7 @@ func clearEnv(keys ...string) {
 	log := logger.NewZerologLogger("info", io.Discard)
 	for _, k := range keys {
 		if err := os.Unsetenv(k); err != nil {
-			log.Error("%v", err)
+			log.Error(err.Error())
 		}
 	}
 }
