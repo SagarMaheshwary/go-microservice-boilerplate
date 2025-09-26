@@ -66,22 +66,18 @@ If you don't have **make** installed on your system, you can install it using:
 
 ## Running the Service
 
-Option 1: Run locally with hot reload (Air required)
+Run locally
 
 ```bash
-make run-dev
+make run #production mode, build and run binary
+make run-dev #development mode, reloads application on file change ([Air](https://github.com/air-verse/air?tab=readme-ov-file#via-go-install-recommended) required)
 ```
 
-Option 2: Run inside Docker (development mode with hot reload)
+Run inside Docker
 
 ```bash
-make docker-run-dev
-```
-
-Option 3: Run inside Docker (production mode)
-
-```bash
-make docker-run-prod
+make docker-run #production mode
+make docker-run-dev #development mode, reloads application on file change
 ```
 
 ## Running Tests
@@ -148,14 +144,3 @@ If you’d like to enable database integration:
 - Update .env with valid DB credentials.
 - Uncomment the database initialization code in cmd/server/main.go.
 - Database-backed RPCs will be added in the next part of this series.
-
-## Next Steps
-
-This boilerplate is part of a series. In the next part, we’ll add:
-
-- A real database-backed RPC
-- Database migrations
-- Logging improvements
-- Middleware (interceptors)
-
-Stay tuned! 🚀
