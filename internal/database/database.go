@@ -62,7 +62,7 @@ func NewDatabase(opts *Opts) (DatabaseService, error) {
 	sqlDB.SetMaxOpenConns(opts.Config.PoolMaxOpenConns)
 	sqlDB.SetConnMaxLifetime(opts.Config.PoolConnMaxLifetime)
 
-	opts.Logger.Info(`Database connected on driver` + driver)
+	opts.Logger.Info("Database connected", logger.Field{Key: "driver", Value: driver})
 
 	return &Database{db: db, Logger: opts.Logger}, nil
 }

@@ -36,7 +36,7 @@ func NewServer(opts *Opts) *GRPCServer {
 func (s *GRPCServer) ServeListener(listener net.Listener) error {
 	s.Logger.Info("gRPC server started", logger.Field{Key: "address", Value: listener.Addr().String()})
 	if err := s.Server.Serve(listener); err != nil {
-		s.Logger.Error("gRPC server failed", logger.Field{Key: "error", Value: err})
+		s.Logger.Error("gRPC server failed", logger.Field{Key: "error", Value: err.Error()})
 		return err
 	}
 	return nil
@@ -46,7 +46,10 @@ func (s *GRPCServer) Serve() error {
 	url := s.Config.URL
 	listener, err := net.Listen("tcp", url)
 	if err != nil {
-		s.Logger.Error("Failed to create tcp listener on %q: %v", logger.Field{Key: "address", Value: url}, logger.Field{Key: "error", Value: err})
+		s.Logger.Error("Failed to create tcp listener on %q: %v",
+			logger.Field{Key: "address", Value: url},
+			logger.Field{Key: "error", Value: err.Error()},
+		)
 		return err
 	}
 	return s.ServeListener(listener)
