@@ -30,7 +30,7 @@ func main() {
 	// 	Logger: log,
 	// })
 	// if err != nil {
-	// 	log.Fatal("%v", err)
+	// 	log.Fatal(err.Error())
 	// }
 
 	grpcServer := server.NewServer(&server.Opts{
@@ -52,7 +52,7 @@ func main() {
 
 	//UNCOMMENT TO USE DATABASE
 	// if err := db.Close(); err != nil {
-	// 	log.Error("failed to close database client: %v", err)
+	// log.Error("failed to close database client", logger.Field{Key: "error", Value: err.Error()})
 	// }
 
 	log.Info("Shutdown complete!")
