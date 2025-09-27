@@ -70,7 +70,7 @@ Run locally
 
 ```bash
 make run #production mode, build and run binary
-make run-dev #development mode, reloads application on file change ([Air](https://github.com/air-verse/air?tab=readme-ov-file#via-go-install-recommended) required)
+make run-dev #development mode, reloads application on file change
 ```
 
 Run inside Docker
