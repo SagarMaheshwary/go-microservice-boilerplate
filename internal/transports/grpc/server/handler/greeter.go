@@ -10,6 +10,10 @@ type GreeterServer struct {
 	helloworld.GreeterServer
 }
 
+func NewGreeterServer() *GreeterServer {
+	return &GreeterServer{}
+}
+
 func (e *GreeterServer) SayHello(ctx context.Context, in *helloworld.SayHelloRequest) (*helloworld.SayHelloResponse, error) {
 	return &helloworld.SayHelloResponse{
 		Message: "Hello, World!",
