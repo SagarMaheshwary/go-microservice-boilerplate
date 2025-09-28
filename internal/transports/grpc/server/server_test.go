@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/test/bufconn"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 const bufSize = 1024 * 1024
@@ -21,9 +23,17 @@ func TestNewServer(t *testing.T) {
 	log := logger.NewZerologLogger("info", io.Discard)
 	cfg := &config.GRPCServer{}
 
+	// Create in-memory sqlite gorm.DB
+	fakeDB, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+
+	mockDB := new(MockDatabaseService)
+	mockDB.On("DB").Return(fakeDB)
+	mockDB.On("Close").Return(nil)
+
 	srv := server.NewServer(&server.Opts{
-		Config: cfg,
-		Logger: log,
+		Config:   cfg,
+		Logger:   log,
+		Database: mockDB,
 	})
 
 	require.NotNil(t, srv)
@@ -37,9 +47,17 @@ func TestServeListener(t *testing.T) {
 	var buf bytes.Buffer
 	log := logger.NewZerologLogger("info", &buf)
 
+	// Create in-memory sqlite gorm.DB
+	fakeDB, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+
+	mockDB := new(MockDatabaseService)
+	mockDB.On("DB").Return(fakeDB)
+	mockDB.On("Close").Return(nil)
+
 	srv := server.NewServer(&server.Opts{
-		Config: &config.GRPCServer{},
-		Logger: log,
+		Config:   &config.GRPCServer{},
+		Logger:   log,
+		Database: mockDB,
 	})
 
 	lis := bufconn.Listen(bufSize)
@@ -60,14 +78,21 @@ func TestServe(t *testing.T) {
 	var buf bytes.Buffer
 	log := logger.NewZerologLogger("info", &buf)
 
+	// Create in-memory sqlite gorm.DB
+	fakeDB, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+
+	mockDB := new(MockDatabaseService)
+	mockDB.On("DB").Return(fakeDB)
+	mockDB.On("Close").Return(nil)
+
 	srv := server.NewServer(&server.Opts{
 		Config: &config.GRPCServer{
-			URL: ":0",
+			URL: ":0", // Use :0 to let OS pick a free port
 		},
-		Logger: log,
+		Logger:   log,
+		Database: mockDB,
 	})
 
-	// Use :0 to let OS pick a free port
 	go func() {
 		_ = srv.Serve()
 	}()

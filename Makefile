@@ -1,9 +1,12 @@
 # Variables
 APP_NAME := go-microservice-boilerplate
+MIGRATIONS_DIR ?= internal/database/migrations
 
 .PHONY: help proto build run run-dev test \
         docker-build-dev docker-build-prod \
-        docker-run-dev docker-run-prod docker-test
+        docker-run-dev docker-run-prod clean \
+				migrate-up migrate-down migrate-new \
+				test-unit test-integration
 
 help: ## Show this help
 	@echo "Available make commands:"
@@ -18,11 +21,17 @@ build: ## Build the service binary
 run: build ## Run the service locally
 	./bin/$(APP_NAME)
 
-run-dev: ## Run the app locally with air (requires air installed, https://github.com/air-verse/air?tab=readme-ov-file#via-go-install-recommended)
+run-dev: ## Run the app locally with air
 	air
 
 test: ## Run tests locally
 	go test ./internal/... -v
+
+test-unit: ## Run only unit tests inside internal/*
+	go test $$(go list ./internal/... | grep -v ./internal/tests/) -v
+
+test-integration: ## Run only integration tests inside internal/tests
+	go test ./internal/tests/... -v
 
 # Docker targets
 docker-build-dev: ## Build docker image for development (hot reload via air)
@@ -37,10 +46,34 @@ docker-run-dev: docker-build-dev ## Run docker container in development mode
 docker-run: docker-build ## Run docker container in production mode
 	docker run -it --rm -p 5000:5000 -v .env:/app/.env $(APP_NAME):latest
 
-docker-test: docker-build-dev ## Run tests inside docker
-	docker run --rm $(APP_NAME):dev go test ./internal/... -v
-
-clean:
+clean: ## remove generated docker images/binaries
 	rm -rf bin
 	docker image rm $(APP_NAME):latest || true
 	docker image rm $(APP_NAME):dev || true
+
+# Migration targets
+migrate-up: ## Run migrations up.
+	@if [ -z "$(dsn)" ]; then \
+		echo "Usage: make migrate-up dsn=\"postgres://postgres:password@localhost:5432/boilerplate?sslmode=disable\""; \
+		exit 1; \
+	fi
+
+	@echo "Running migrations up on DSN=$(dsn)"
+	@migrate -path $(MIGRATIONS_DIR) -database $(dsn) up
+
+migrate-down: ## Run migrations down (be careful!).
+	@if [ -z "$(dsn)" ]; then \
+		echo "Usage: make migrate-down dsn=\"postgres://postgres:password@localhost:5432/boilerplate?sslmode=disable\""; \
+		exit 1; \
+	fi
+
+	@echo "Running migrations down on $(DATABASE_NAME) with DSN=$(DATABASE_DSN)"
+	@migrate -path $(MIGRATIONS_DIR) -database $(dsn) down
+
+migrate-new: ## Create a new migration file. 
+	@if [ -z "$(name)" ]; then \
+		echo "Usage: make migrate-new name=add_users_table"; \
+		exit 1; \
+	fi
+
+	@migrate create -ext sql -dir $(MIGRATIONS_DIR) -seq $(name)

@@ -4,7 +4,9 @@ import (
 	"net"
 
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/config"
+	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/logger"
+	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/service"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server/handler"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server/interceptor"
 	helloworld "github.com/sagarmaheshwary/go-microservice-boilerplate/proto/hello_world"
@@ -12,19 +14,23 @@ import (
 )
 
 type Opts struct {
-	Config *config.GRPCServer
-	Logger logger.Logger
+	Config   *config.GRPCServer
+	Logger   logger.Logger
+	Database database.DatabaseService
 }
 
 type GRPCServer struct {
-	Server *grpc.Server
-	Config *config.GRPCServer
-	Logger logger.Logger
+	Server   *grpc.Server
+	Config   *config.GRPCServer
+	Logger   logger.Logger
+	Database database.Database
 }
 
 func NewServer(opts *Opts) *GRPCServer {
 	srv := grpc.NewServer(grpc.UnaryInterceptor(interceptor.LoggerInterceptor(opts.Logger)))
-	helloworld.RegisterGreeterServer(srv, handler.NewGreeterServer())
+	helloworld.RegisterGreeterServer(srv, handler.NewGreeterServer(
+		service.NewUserService(opts.Database),
+	))
 
 	return &GRPCServer{
 		Server: srv,

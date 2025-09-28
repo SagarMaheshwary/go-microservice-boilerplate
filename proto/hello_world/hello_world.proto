@@ -12,4 +12,11 @@ message SayHelloRequest {}
 
 message SayHelloResponse {
   string message = 1;
+  User user = 2;
+}
+
+message User {
+  int64 id = 1;
+  string name = 2;
+  string email = 3;
 }
