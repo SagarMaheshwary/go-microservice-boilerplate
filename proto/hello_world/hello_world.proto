@@ -8,7 +8,9 @@ service Greeter {
   rpc SayHello(SayHelloRequest) returns (SayHelloResponse);
 }
 
-message SayHelloRequest {}
+message SayHelloRequest {
+  int64 user_id = 1;
+}
 
 message SayHelloResponse {
   string message = 1;

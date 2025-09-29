@@ -9,7 +9,7 @@ This repository provides a clean foundation with:
 - gRPC server with an example RPC to demonstrate service structure
 - Multi-stage Docker builds for both development and production
 - Makefile with useful developer commands
-- Unit tests for core components
+- Unit and integration tests
 
 Use this as a starting point for your own services — just replace the example RPC with your own application logic.
 
@@ -24,7 +24,8 @@ Use this as a starting point for your own services — just replace the example 
   - Development: hot reload with Air
   - Production: optimized binary build
 - Makefile for development, testing, and Docker tasks
-- Unit tests
+- Unit & integration tests (using Testify + Testcontainers)
+- Migrations & seeders with Makefile commands
 
 ## Getting Started
 
@@ -69,30 +70,79 @@ If you don't have **make** installed on your system, you can install it using:
 Run locally
 
 ```bash
-make run #production mode, build and run binary
-make run-dev #development mode, reloads application on file change
+make run     # Production mode, build and run binary
+make run-dev # Development mode, reloads application on file change
 ```
 
 Run inside Docker
 
 ```bash
-make docker-run #production mode
-make docker-run-dev #development mode, reloads application on file change
+make docker-run     # Production mode
+make docker-run-dev # Development mode, reloads application on file change
 ```
 
-## Running Tests
+## Testing
 
-Run unit tests locally:
+- Unit tests with mocks (using Testify).
+- Integration tests with [Testcontainers](https://github.com/testcontainers/testcontainers-go):
+  - Runs a real Postgres container for end-to-end database testing.
+  - Tests ensure migrations + seeders work correctly.
 
 ```bash
-make test
+make test             # all tests
+make test-unit        # unit tests only
+make test-integration # integration tests only
 ```
 
-Or run them inside Docker:
+## Database & Migrations
+
+- This boilerplate supports Postgres, SQLite, MySQL (via GORM).
+- Uses [golang-migrate](https://github.com/golang-migrate/migrate) CLI for schema migrations.
+- Example migration included: `users` table.
+
+#### Install the migrate CLI
+
+By default, this boilerplate is set up for Postgres.
+Install the CLI with the Postgres driver:
 
 ```bash
-make docker-test
+go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 ```
+
+If you want to use another database, you’ll need to build the CLI with the corresponding driver tag:
+
+- MySQL:
+
+```bash
+go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+```
+
+- SQLite:
+
+```bash
+go install -tags 'sqlite' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+```
+
+#### Makefile commands:
+
+```bash
+make migrate-up dsn="postgres://username:password@localhost:5432/dbname?sslmode=disable"    # Apply migrations
+make migrate-down dsn="postgres://username:password@localhost:5432/dbname?sslmode=disable"  # Rollback migrations
+make migrate-new name=create_users_table                                                    # Create a new migration file
+```
+
+## Seeders
+
+- Seeders are stored in `internal/database/seeders/`.
+- Example `users` seeder included.
+- Seeders are run via a dedicated CLI:
+
+```bash
+make seed
+```
+
+- Each seeder logs progress, so you can see which one is running and where it fails.
+- CLI entrypoint is under `cmd/cli/` — extensible if you want to add more developer commands later.
 
 ## Project Structure
 
@@ -100,20 +150,26 @@ make docker-test
 .
 ├── proto/          # Protobuf definitions and generated code
 ├── cmd/            # Service entrypoint (main.go)
-├── internal/           # Core application code
+├── internal/       # Core application code
 │   ├── config/         # Load and manage environment configurations
-│   ├── database/       # Database initialization and connection handling
 │   ├── logger/         # Zerolog-based structured logging
-│   └── transports/         # Different communication protocols (e.g grpc, http, websocket). Each protocol can include both server/ and client/ implementations to keep responsibilities organized.
+│   ├── service/        # Services for application business logic
+│   └── database/       # Database initialization and connection handling
+│       ├── migrations/     # Database migrations
+│       ├── seeder/         # Seeders for generating fake data for dev/test
+│       ├── model/          # GORM models
+│   └── transports/     # Different communication protocols (e.g grpc, http, websocket). Each protocol can include both server/ and client/ implementations to keep responsibilities organized.
 │       ├── grpc/           # gRPC transport
-│       │   ├── server/     # gRPC server setup and service registration
+│       │   ├── server/         # gRPC server setup and service registration
 │       │   │   ├── handler/         # RPC handlers
 │       │   │   ├── interceptor/     # gRPC interceptors
-│       │   └── client/     # (Optional) Place for gRPC clients (e.g., microservice-to-microservice communication)
+│       │   └── client/         # (Optional) Place for gRPC clients (e.g., microservice-to-microservice communication)
+│   └── tests/          # integration tests
+│       ├── testutils/      # test helpers
 ├── Dockerfile      # Multi-stage build for dev/prod
 ├── Makefile        # Workflow automation (build, run, test, docker)
 ├── .env.example    # Example environment variables
-└── README.md       # Project documentation
+└── readme.md       # Project documentation
 ```
 
 ## Test gRPC
@@ -121,26 +177,18 @@ make docker-test
 After running the app (e.g via make docker-run-dev), you can test the example RPC using [grpcurl](https://github.com/fullstorydev/grpcurl)
 
 ```bash
-grpcurl -proto ./proto/hello_world/hello_world.proto -plaintext localhost:5000 hello_world.Greeter/SayHello
+grpcurl -d '{"user_id": 1}' -proto ./proto/hello_world/hello_world.proto -plaintext localhost:5000 hello_world.Greeter/SayHello
 ```
 
 Expected response:
 
 ```json
 {
-  "message": "Hello World"
+  "message": "Hello, World!",
+  "user": {
+    "id": "1",
+    "name": "Alice",
+    "email": "alice@example.com"
+  }
 }
 ```
-
-### Database
-
-This boilerplate includes a database package (Postgres/MySQL/SQLite supported).
-
-In Part One, database connection is disabled by default to keep the service runnable out-of-the-box.
-
-If you’d like to enable database integration:
-
-- Set up a Postgres instance (local or Docker).
-- Update .env with valid DB credentials.
-- Uncomment the database initialization code in cmd/server/main.go.
-- Database-backed RPCs will be added in the next part of this series.

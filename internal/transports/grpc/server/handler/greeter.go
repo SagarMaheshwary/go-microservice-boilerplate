@@ -19,7 +19,7 @@ func NewGreeterServer(userService service.UserService) *GreeterServer {
 }
 
 func (g *GreeterServer) SayHello(ctx context.Context, in *helloworld.SayHelloRequest) (*helloworld.SayHelloResponse, error) {
-	user, err := g.userService.FindByID(ctx, 1)
+	user, err := g.userService.FindByID(ctx, uint(in.UserId))
 	if err != nil {
 		return nil, status.Error(codes.Unknown, err.Error())
 	}

@@ -1,12 +1,12 @@
 # Variables
 APP_NAME := go-microservice-boilerplate
-MIGRATIONS_DIR ?= internal/database/migrations
+MIGRATIONS_DIR := internal/database/migrations
 
 .PHONY: help proto build run run-dev test \
         docker-build-dev docker-build-prod \
         docker-run-dev docker-run-prod clean \
 				migrate-up migrate-down migrate-new \
-				test-unit test-integration
+				test-unit test-integration seed
 
 help: ## Show this help
 	@echo "Available make commands:"
@@ -77,3 +77,6 @@ migrate-new: ## Create a new migration file.
 	fi
 
 	@migrate create -ext sql -dir $(MIGRATIONS_DIR) -seq $(name)
+
+seed: ## Run seeders
+	go run cmd/cli/main.go seed

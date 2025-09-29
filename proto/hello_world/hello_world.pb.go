@@ -23,6 +23,7 @@ const (
 
 type SayHelloRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -55,6 +56,13 @@ func (x *SayHelloRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use SayHelloRequest.ProtoReflect.Descriptor instead.
 func (*SayHelloRequest) Descriptor() ([]byte, []int) {
 	return file_proto_hello_world_hello_world_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *SayHelloRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
 }
 
 type SayHelloResponse struct {
@@ -173,8 +181,9 @@ var File_proto_hello_world_hello_world_proto protoreflect.FileDescriptor
 
 const file_proto_hello_world_hello_world_proto_rawDesc = "" +
 	"\n" +
-	"#proto/hello_world/hello_world.proto\x12\vhello_world\"\x11\n" +
-	"\x0fSayHelloRequest\"S\n" +
+	"#proto/hello_world/hello_world.proto\x12\vhello_world\"*\n" +
+	"\x0fSayHelloRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\"S\n" +
 	"\x10SayHelloResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\x12%\n" +
 	"\x04user\x18\x02 \x01(\v2\x11.hello_world.UserR\x04user\"@\n" +
