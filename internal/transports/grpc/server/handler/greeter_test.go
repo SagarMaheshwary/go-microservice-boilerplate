@@ -23,7 +23,7 @@ func TestSayHello_Success(t *testing.T) {
 
 	s := handler.NewGreeterServer(mockService)
 
-	req := &helloworld.SayHelloRequest{}
+	req := &helloworld.SayHelloRequest{UserId: 1}
 	resp, err := s.SayHello(context.Background(), req)
 
 	require.NoError(t, err)

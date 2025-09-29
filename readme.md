@@ -4,7 +4,7 @@ A minimal, production-ready boilerplate for building gRPC microservices in Go.
 
 This repository provides a clean foundation with:
 
-- Config and validation
+- Config and Logger
 - Database setup with connection pooling
 - gRPC server with an example RPC to demonstrate service structure
 - Multi-stage Docker builds for both development and production
@@ -85,8 +85,8 @@ make docker-run-dev # Development mode, reloads application on file change
 
 - Unit tests with mocks (using Testify).
 - Integration tests with [Testcontainers](https://github.com/testcontainers/testcontainers-go):
-  - Runs a real Postgres container for end-to-end database testing.
-  - Tests ensure migrations + seeders work correctly.
+  - The boilerplate is set up to support integration testing with real services.
+  - An example test in `internal/tests/service/` directory is included that spins up a Postgres container and verifies the `UserService` against a real database.
 
 ```bash
 make test             # all tests
@@ -133,7 +133,7 @@ make migrate-new name=create_users_table                                        
 
 ## Seeders
 
-- Seeders are stored in `internal/database/seeders/`.
+- Seeders are stored in `internal/database/seeder/`.
 - Example `users` seeder included.
 - Seeders are run via a dedicated CLI:
 
@@ -157,15 +157,15 @@ make seed
 │   └── database/       # Database initialization and connection handling
 │       ├── migrations/     # Database migrations
 │       ├── seeder/         # Seeders for generating fake data for dev/test
-│       ├── model/          # GORM models
+│       └── model/          # GORM models
 │   └── transports/     # Different communication protocols (e.g grpc, http, websocket). Each protocol can include both server/ and client/ implementations to keep responsibilities organized.
 │       ├── grpc/           # gRPC transport
 │       │   ├── server/         # gRPC server setup and service registration
 │       │   │   ├── handler/         # RPC handlers
-│       │   │   ├── interceptor/     # gRPC interceptors
+│       │   │   └── interceptor/     # gRPC interceptors
 │       │   └── client/         # (Optional) Place for gRPC clients (e.g., microservice-to-microservice communication)
 │   └── tests/          # integration tests
-│       ├── testutils/      # test helpers
+│       └── testutils/      # test helpers
 ├── Dockerfile      # Multi-stage build for dev/prod
 ├── Makefile        # Workflow automation (build, run, test, docker)
 ├── .env.example    # Example environment variables
