@@ -27,37 +27,61 @@ Use this as a starting point for your own services — just replace the example 
 - Unit & integration tests (using Testify + Testcontainers)
 - Migrations & seeders with Makefile commands
 
-## Getting Started
-
-1. Clone the repository
+## Project Structure
 
 ```bash
-git clone https://github.com/SagarMaheshwary/go-microservice-boilerplate.git
-cd go-microservice-boilerplate
-```
-
-2. Setup environment variables (The application falls back to system environment variables if a `.env` file is not found—useful in Kubernetes where variables are mounted via ConfigMaps/Secrets.)
-
-Copy the example environment file and adjust values as needed:
-
-```bash
-cp .env.example .env
+.
+├── proto/          # Protobuf definitions and generated code
+├── cmd/            # Service entrypoint (main.go)
+├── internal/       # Core application code
+│   ├── config/         # Load and manage environment configurations
+│   ├── logger/         # Zerolog-based structured logging
+│   ├── service/        # Services for application business logic
+│   └── database/       # Database initialization and connection handling
+│       ├── migrations/     # Database migrations
+│       ├── seeder/         # Seeders for generating fake data for dev/test
+│       └── model/          # GORM models
+│   └── transports/     # Different communication protocols (e.g grpc, http, websocket). Each protocol can include both server/ and client/ implementations to keep responsibilities organized.
+│       ├── grpc/           # gRPC transport
+│       │   ├── server/         # gRPC server setup and service registration
+│       │   │   ├── handler/         # RPC handlers
+│       │   │   └── interceptor/     # gRPC interceptors
+│       │   └── client/         # (Optional) Place for gRPC clients (e.g., microservice-to-microservice communication)
+│   └── tests/          # integration tests
+│       └── testutils/      # test helpers
+├── Dockerfile      # Multi-stage build for dev/prod
+├── Makefile        # Workflow automation (build, run, test, docker)
+├── .env.example    # Example environment variables
+└── readme.md       # Project documentation
 ```
 
 ## Requirements
 
 You can run the service either locally or using Docker.
 
-Local requirements
+#### Local requirements
 
 - [Go 1.22+](https://go.dev/dl/)
 - [Make](https://www.gnu.org/software/make/)
 - (Optional) [Air](https://github.com/air-verse/air?tab=readme-ov-file#via-go-install-recommended) for hot reload in development
 
-Docker requirements
+#### Docker requirements
 
 - [Docker](https://docs.docker.com/get-docker/)
 - [Make](https://www.gnu.org/software/make/)
+
+#### Makefile
+
+This project comes with a Makefile to simplify common workflows (building, running, migrations, tests, etc.).
+Run the following to see all available commands:
+
+```bash
+make help
+```
+
+> Not every command is documented in the README, so `make help` is the best way to explore what’s available.
+
+#### Installing Make
 
 If you don't have **make** installed on your system, you can install it using:
 
@@ -65,33 +89,27 @@ If you don't have **make** installed on your system, you can install it using:
 - **MacOS (Homebrew):** `brew install make`
 - **Windows (via Chocolatey):** `choco install make`
 
-## Running the Service
+## Getting Started
 
-Run locally
+Clone the repository
 
 ```bash
-make run     # Production mode, build and run binary
-make run-dev # Development mode, reloads application on file change
+git clone https://github.com/SagarMaheshwary/go-microservice-boilerplate.git
+cd go-microservice-boilerplate
 ```
 
-Run inside Docker
+Setup environment variables (The application falls back to system environment variables if a `.env` file is not found—useful in Kubernetes where variables are mounted via ConfigMaps/Secrets.)
+
+Copy the example environment file and adjust values as needed:
 
 ```bash
-make docker-run     # Production mode
-make docker-run-dev # Development mode, reloads application on file change
+cp .env.example .env
 ```
 
-## Testing
-
-- Unit tests with mocks (using Testify).
-- Integration tests with [Testcontainers](https://github.com/testcontainers/testcontainers-go):
-  - The boilerplate is set up to support integration testing with real services.
-  - An example test in `internal/tests/service/` directory is included that spins up a Postgres container and verifies the `UserService` against a real database.
+Start Postgres using Docker Compose (make sure you have Docker Compose installed):
 
 ```bash
-make test             # all tests
-make test-unit        # unit tests only
-make test-integration # integration tests only
+docker compose up
 ```
 
 ## Database & Migrations
@@ -144,32 +162,33 @@ make seed
 - Each seeder logs progress, so you can see which one is running and where it fails.
 - CLI entrypoint is under `cmd/cli/` — extensible if you want to add more developer commands later.
 
-## Project Structure
+## Running the Service
+
+Run locally
 
 ```bash
-.
-├── proto/          # Protobuf definitions and generated code
-├── cmd/            # Service entrypoint (main.go)
-├── internal/       # Core application code
-│   ├── config/         # Load and manage environment configurations
-│   ├── logger/         # Zerolog-based structured logging
-│   ├── service/        # Services for application business logic
-│   └── database/       # Database initialization and connection handling
-│       ├── migrations/     # Database migrations
-│       ├── seeder/         # Seeders for generating fake data for dev/test
-│       └── model/          # GORM models
-│   └── transports/     # Different communication protocols (e.g grpc, http, websocket). Each protocol can include both server/ and client/ implementations to keep responsibilities organized.
-│       ├── grpc/           # gRPC transport
-│       │   ├── server/         # gRPC server setup and service registration
-│       │   │   ├── handler/         # RPC handlers
-│       │   │   └── interceptor/     # gRPC interceptors
-│       │   └── client/         # (Optional) Place for gRPC clients (e.g., microservice-to-microservice communication)
-│   └── tests/          # integration tests
-│       └── testutils/      # test helpers
-├── Dockerfile      # Multi-stage build for dev/prod
-├── Makefile        # Workflow automation (build, run, test, docker)
-├── .env.example    # Example environment variables
-└── readme.md       # Project documentation
+make run     # Production mode, build and run binary
+make run-dev # Development mode, reloads application on file change
+```
+
+Run inside Docker
+
+```bash
+make docker-run     # Production mode
+make docker-run-dev # Development mode, reloads application on file change
+```
+
+## Testing
+
+- Unit tests with mocks (using Testify).
+- Integration tests with [Testcontainers](https://github.com/testcontainers/testcontainers-go):
+  - The boilerplate is set up to support integration testing with real services.
+  - An example test in `internal/tests/service/` directory is included that spins up a Postgres container and verifies the `UserService` against a real database.
+
+```bash
+make test             # all tests
+make test-unit        # unit tests only
+make test-integration # integration tests only
 ```
 
 ## Test gRPC
