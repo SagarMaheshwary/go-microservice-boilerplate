@@ -141,7 +141,7 @@ go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 go install -tags 'sqlite' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 ```
 
-#### Makefile commands:
+#### Makefile commands
 
 ```bash
 make migrate-up dsn="postgres://username:password@localhost:5432/dbname?sslmode=disable"    # Apply migrations

@@ -2,7 +2,7 @@
 APP_NAME := go-microservice-boilerplate
 MIGRATIONS_DIR := internal/database/migrations
 
-.PHONY: help proto build run run-dev test \
+.PHONY: help proto-gen build run run-dev test \
         docker-build-dev docker-build-prod \
         docker-run-dev docker-run-prod clean \
 				migrate-up migrate-down migrate-new \
@@ -12,7 +12,7 @@ help: ## Show this help
 	@echo "Available make commands:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
-proto: ## Generate probuf code from proto files
+proto-gen: ## Generate probuf code from proto files
 	protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./proto/**/*.proto
 
 build: ## Build the service binary
