@@ -91,19 +91,6 @@ func TestNewConfigWithValidEnv(t *testing.T) {
 	assert.Equal(t, 45*time.Second, cfg.Database.PoolConnMaxLifetime)
 }
 
-// TestNewConfigWithInvalidDatabaseURL ensures validation fails with bad DSN.
-func TestNewConfigWithInvalidDatabaseURL(t *testing.T) {
-	os.Setenv("GRPC_SERVER_URL", "localhost:50051")
-	os.Setenv("DATABASE_DSN", "://not-a-url")
-	os.Setenv("DATABASE_DRIVER", "postgres")
-
-	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{
-		Logger: logger.NewZerologLogger("info", io.Discard),
-	})
-	require.Error(t, err)
-	require.Nil(t, cfg)
-}
-
 // TestNewConfigWithInvalidDriver ensures unsupported driver fails validation.
 func TestNewConfigWithInvalidDriver(t *testing.T) {
 	os.Setenv("GRPC_SERVER_URL", "localhost:50051")

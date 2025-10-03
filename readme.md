@@ -106,12 +106,6 @@ Copy the example environment file and adjust values as needed:
 cp .env.example .env
 ```
 
-Start Postgres using Docker Compose (make sure you have Docker Compose installed):
-
-```bash
-docker compose up
-```
-
 ## Database & Migrations
 
 - This boilerplate supports Postgres, SQLite, MySQL (via GORM).
@@ -177,6 +171,14 @@ Run inside Docker
 make docker-run     # Production mode
 make docker-run-dev # Development mode, reloads application on file change
 ```
+
+This boilerplate also includes a `docker-compose.yml` with a Postgres service. You can bring it up with:
+
+```bash
+docker compose up -d
+```
+
+Or, if you already have your own Postgres instance running, update the configuration accordingly.
 
 ## Testing
 

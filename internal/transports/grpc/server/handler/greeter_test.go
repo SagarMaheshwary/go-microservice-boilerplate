@@ -2,6 +2,7 @@ package handler_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,7 +29,7 @@ func TestSayHello_Success(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, resp)
-	assert.Equal(t, "Hello, World!", resp.Message)
+	assert.Equal(t, fmt.Sprintf("Hello, %s!", mockUser.Name), resp.Message)
 	assert.Equal(t, mockUser.Name, resp.User.Name)
 	assert.Equal(t, mockUser.Email, resp.User.Email)
 

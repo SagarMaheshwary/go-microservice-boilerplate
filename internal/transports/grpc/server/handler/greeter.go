@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/service"
 	helloworld "github.com/sagarmaheshwary/go-microservice-boilerplate/proto/hello_world"
@@ -21,11 +22,11 @@ func NewGreeterServer(userService service.UserService) *GreeterServer {
 func (g *GreeterServer) SayHello(ctx context.Context, in *helloworld.SayHelloRequest) (*helloworld.SayHelloResponse, error) {
 	user, err := g.userService.FindByID(ctx, uint(in.UserId))
 	if err != nil {
-		return nil, status.Error(codes.Unknown, err.Error())
+		return nil, status.Errorf(codes.NotFound, "user not found")
 	}
 
 	return &helloworld.SayHelloResponse{
-		Message: "Hello, World!",
+		Message: fmt.Sprintf("Hello, %s!", user.Name),
 		User: &helloworld.User{
 			Id:    int64(user.ID),
 			Name:  user.Name,

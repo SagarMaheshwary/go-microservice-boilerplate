@@ -30,7 +30,7 @@ type GRPCServer struct {
 }
 
 type Database struct {
-	DSN                 string        `validate:"required,url"`
+	DSN                 string        `validate:"required"`
 	Driver              string        `validate:"required,oneof=postgres mysql sqlite"`
 	PoolMaxIdleConns    int           `validate:"gte=0"`
 	PoolMaxOpenConns    int           `validate:"gte=0"`
