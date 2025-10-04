@@ -19,7 +19,7 @@ func main() {
 
 	cmd := os.Args[1]
 
-	cfg, err := config.NewConfig()
+	cfg, err := config.NewConfig(log)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

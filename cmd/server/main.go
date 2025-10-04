@@ -19,7 +19,7 @@ func main() {
 
 	log := logger.NewZerologLogger("info", os.Stderr)
 
-	cfg, err := config.NewConfig()
+	cfg, err := config.NewConfig(log)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

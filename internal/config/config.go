@@ -37,9 +37,10 @@ type Database struct {
 	PoolConnMaxLifetime time.Duration `validate:"gte=0"` // must be non-negative
 }
 
-func NewConfig() (*Config, error) {
+func NewConfig(log logger.Logger) (*Config, error) {
 	return NewConfigWithOptions(LoaderOptions{
 		EnvPath: path.Join(rootDir(), "..", ".env"),
+		Logger:  log,
 	})
 }
 
