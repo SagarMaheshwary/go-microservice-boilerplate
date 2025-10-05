@@ -70,7 +70,7 @@ func NewConfigWithOptions(opts LoaderOptions) (*Config, error) {
 
 	cfg := &Config{
 		GRPCServer: &GRPCServer{
-			URL: getEnv("GRPC_SERVER_URL", ":5002"),
+			URL: getEnv("GRPC_SERVER_URL", ":5000"),
 		},
 		Database: &Database{
 			DSN:                 getEnv("DATABASE_DSN", ""),

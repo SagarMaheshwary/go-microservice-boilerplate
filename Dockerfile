@@ -18,13 +18,15 @@ EXPOSE 5000
 CMD ["./main"]
 
 FROM golang:1.25 AS development
-
 WORKDIR /app
 
-COPY . .
+# Copy go.mod and go.sum first for dependency caching
+COPY go.mod go.sum ./
+RUN go mod download
 
 RUN go install github.com/air-verse/air@v1.52.3
-RUN go mod download
+
+COPY . .
 
 EXPOSE 5000
 CMD ["air", "-c", ".air.toml"]
