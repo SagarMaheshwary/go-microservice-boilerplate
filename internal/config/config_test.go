@@ -133,7 +133,7 @@ func TestNewConfigWithDefaultsApplied(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, ":5002", cfg.GRPCServer.URL)
+	assert.Equal(t, ":5000", cfg.GRPCServer.URL)
 	assert.Equal(t, "postgres", cfg.Database.Driver) // default
 	assert.Equal(t, 10, cfg.Database.PoolMaxIdleConns)
 	assert.Equal(t, 100, cfg.Database.PoolMaxOpenConns)
