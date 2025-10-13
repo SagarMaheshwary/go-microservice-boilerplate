@@ -219,7 +219,7 @@ Expected response:
 This boilerplate is built as part of the Go Microservices Boilerplate Series: From Hello World to Production.
 
 - [Part 1](https://dev.to/sagarmaheshwary/go-microservices-boilerplate-series-from-hello-world-to-production-part-1-46k5) – Project setup: config, logging, gRPC server, graceful shutdowns, Dockerfile, and Makefile.
-- Part 2 (coming soon) – Database integration: Postgres with GORM, migrations, seeders, service layer, and integration tests.
+- [Part 2](https://dev.to/sagarmaheshwary/go-microservices-boilerplate-series-from-hello-world-to-production-part-2-428b) – Database integration: Postgres with GORM, migrations, seeders, service layer, and integration tests.
 - Part 3 (coming soon) – Redis caching, observability (Prometheus + OpenTelemetry), and health checks.
 
 ---
