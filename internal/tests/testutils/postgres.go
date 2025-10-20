@@ -20,7 +20,6 @@ import (
 
 func SetupPostgres(t *testing.T) database.DatabaseService {
 	ctx := context.Background()
-	log := logger.NewZerologLogger("info", io.Discard)
 
 	dbName := "testdb"
 	username := "test"
@@ -59,7 +58,7 @@ func SetupPostgres(t *testing.T) database.DatabaseService {
 			PoolMaxOpenConns:    100,
 			PoolConnMaxLifetime: time.Hour,
 		},
-		Logger: log,
+		Logger: logger.NewZerologLogger("info", io.Discard),
 	})
 	require.NoError(t, err)
 

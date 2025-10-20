@@ -23,6 +23,7 @@ type LoaderOptions struct {
 type Config struct {
 	GRPCServer *GRPCServer `validate:"required"`
 	Database   *Database   `validate:"required"`
+	Redis      *Redis      `validate:"required"`
 }
 
 type GRPCServer struct {
@@ -35,6 +36,17 @@ type Database struct {
 	PoolMaxIdleConns    int           `validate:"gte=0"`
 	PoolMaxOpenConns    int           `validate:"gte=0"`
 	PoolConnMaxLifetime time.Duration `validate:"gte=0"` // must be non-negative
+}
+
+type Redis struct {
+	Addr         string
+	Password     string
+	DB           int
+	DialTimeout  time.Duration
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+	PoolSize     int
+	MinIdleConns int
 }
 
 func NewConfig(log logger.Logger) (*Config, error) {
@@ -78,6 +90,16 @@ func NewConfigWithOptions(opts LoaderOptions) (*Config, error) {
 			PoolMaxIdleConns:    getEnvInt("DATABASE_POOL_MAX_IDLE", 10),
 			PoolMaxOpenConns:    getEnvInt("DATABASE_POOL_MAX_OPEN", 100),
 			PoolConnMaxLifetime: getEnvDuration("DATABASE_POOL_MAX_LIFETIME", time.Hour),
+		},
+		Redis: &Redis{
+			Addr:         getEnv("REDIS_ADDR", ""),
+			Password:     getEnv("REDIS_PASSWORD", "default"),
+			DB:           getEnvInt("REDIS_DB", 0),
+			DialTimeout:  getEnvDuration("REDIS_DIAL_TIMEOUT", time.Second*5),
+			ReadTimeout:  getEnvDuration("REDIS_READ_TIMEOUT", time.Second*3),
+			WriteTimeout: getEnvDuration("REDIS_WRITE_TIMEOUT", time.Second*3),
+			PoolSize:     getEnvInt("REDIS_POOL_SIZE", 20),
+			MinIdleConns: getEnvInt("REDIS_MIN_IDLE_CONNECTIONS", 5),
 		},
 	}
 

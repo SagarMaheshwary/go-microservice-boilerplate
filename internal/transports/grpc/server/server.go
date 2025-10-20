@@ -3,6 +3,7 @@ package server
 import (
 	"net"
 
+	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/cache"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/config"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/logger"
@@ -17,6 +18,7 @@ type Opts struct {
 	Config   *config.GRPCServer
 	Logger   logger.Logger
 	Database database.DatabaseService
+	Cache    cache.CacheService
 }
 
 type GRPCServer struct {
@@ -24,12 +26,16 @@ type GRPCServer struct {
 	Config   *config.GRPCServer
 	Logger   logger.Logger
 	Database database.Database
+	Cache    cache.CacheService
 }
 
 func NewServer(opts *Opts) *GRPCServer {
 	srv := grpc.NewServer(grpc.UnaryInterceptor(interceptor.LoggerInterceptor(opts.Logger)))
 	helloworld.RegisterGreeterServer(srv, handler.NewGreeterServer(
-		service.NewUserService(opts.Database),
+		service.NewUserService(&service.Opts{
+			Database: opts.Database,
+			Cache:    opts.Cache,
+		}),
 	))
 
 	return &GRPCServer{

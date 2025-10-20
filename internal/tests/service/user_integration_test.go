@@ -14,12 +14,16 @@ import (
 
 func TestUserService_FindByID(t *testing.T) {
 	db := testutils.SetupPostgres(t)
+	redis := testutils.SetupRedis(t)
 
 	// Seed test data
 	u := &model.User{Name: "Alice", Email: "alice@example.com"}
 	require.NoError(t, db.DB().Create(u).Error)
 
-	userService := service.NewUserService(db)
+	userService := service.NewUserService(&service.Opts{
+		Database: db,
+		Cache:    redis,
+	})
 
 	got, err := userService.FindByID(context.Background(), u.ID)
 	require.NoError(t, err)

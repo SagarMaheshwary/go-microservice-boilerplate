@@ -2,7 +2,11 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"time"
 
+	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/cache"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database/model"
 	"gorm.io/gorm"
@@ -13,18 +17,36 @@ type UserService interface {
 }
 
 type userService struct {
-	db *gorm.DB
+	db    *gorm.DB
+	cache cache.CacheService
 }
 
-func NewUserService(db database.DatabaseService) UserService {
-	return &userService{db: db.DB()}
+type Opts struct {
+	Database database.DatabaseService
+	Cache    cache.CacheService
+}
+
+func NewUserService(opts *Opts) UserService {
+	return &userService{db: opts.Database.DB(), cache: opts.Cache}
 }
 
 func (s *userService) FindByID(ctx context.Context, id uint) (*model.User, error) {
-	var user model.User
-	err := s.db.WithContext(ctx).First(&user, id).Error
-	if err != nil {
+	cacheKey := fmt.Sprintf("user:%d", id)
+
+	// Try cache
+	if cached, err := s.cache.Get(ctx, cacheKey); err == nil && cached != "" {
+		var u model.User
+		json.Unmarshal([]byte(cached), &u)
+		return &u, nil
+	}
+
+	u := &model.User{}
+	if err := s.db.First(u, id).Error; err != nil {
 		return nil, err
 	}
-	return &user, nil
+
+	data, _ := json.Marshal(u)
+	s.cache.Set(ctx, cacheKey, data, time.Minute) // cache for 1 minute
+
+	return u, nil
 }

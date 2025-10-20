@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/cache"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/config"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/logger"
@@ -32,10 +33,19 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	redisCache, err := cache.NewRedisCache(ctx, &cache.Opts{
+		Config: cfg.Redis,
+		Logger: log,
+	})
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
 	grpcServer := server.NewServer(&server.Opts{
 		Config:   cfg.GRPCServer,
 		Logger:   log,
 		Database: db,
+		Cache:    redisCache,
 	})
 	go func() {
 		err = grpcServer.Serve()
@@ -52,6 +62,10 @@ func main() {
 
 	if err := db.Close(); err != nil {
 		log.Error("failed to close database client", logger.Field{Key: "error", Value: err.Error()})
+	}
+
+	if err := redisCache.Close(); err != nil {
+		log.Error("failed to close cache client", logger.Field{Key: "error", Value: err.Error()})
 	}
 
 	log.Info("Shutdown complete!")

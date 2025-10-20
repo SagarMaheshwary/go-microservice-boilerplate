@@ -43,6 +43,6 @@ func main() {
 			log.Fatal(err.Error())
 		}
 	default:
-		log.Info("Unknown command " + cmd)
+		log.Error("Unknown command " + cmd)
 	}
 }
