@@ -22,11 +22,16 @@ type LoaderOptions struct {
 
 type Config struct {
 	GRPCServer *GRPCServer `validate:"required"`
+	HTTPServer *HTTPServer `validate:"required"`
 	Database   *Database   `validate:"required"`
 	Redis      *Redis      `validate:"required"`
 }
 
 type GRPCServer struct {
+	URL string `validate:"required,hostname_port"`
+}
+
+type HTTPServer struct {
 	URL string `validate:"required,hostname_port"`
 }
 
@@ -39,14 +44,14 @@ type Database struct {
 }
 
 type Redis struct {
-	Addr         string
-	Password     string
-	DB           int
-	DialTimeout  time.Duration
-	ReadTimeout  time.Duration
-	WriteTimeout time.Duration
-	PoolSize     int
-	MinIdleConns int
+	Addr         string        `validate:"required"`
+	Password     string        `validate:"required"`
+	DB           int           `validate:"gte=0"`
+	DialTimeout  time.Duration `validate:"gte=0"`
+	ReadTimeout  time.Duration `validate:"gte=0"`
+	WriteTimeout time.Duration `validate:"gte=0"`
+	PoolSize     int           `validate:"gte=0"`
+	MinIdleConns int           `validate:"gte=0"`
 }
 
 func NewConfig(log logger.Logger) (*Config, error) {
@@ -84,15 +89,18 @@ func NewConfigWithOptions(opts LoaderOptions) (*Config, error) {
 		GRPCServer: &GRPCServer{
 			URL: getEnv("GRPC_SERVER_URL", ":5000"),
 		},
+		HTTPServer: &HTTPServer{
+			URL: getEnv("HTTP_SERVER_URL", ":4000"),
+		},
 		Database: &Database{
-			DSN:                 getEnv("DATABASE_DSN", ""),
+			DSN:                 getEnv("DATABASE_DSN", "postgres://postgres:password@localhost:5432/boilerplate?sslmode=disable"),
 			Driver:              getEnv("DATABASE_DRIVER", "postgres"),
 			PoolMaxIdleConns:    getEnvInt("DATABASE_POOL_MAX_IDLE", 10),
 			PoolMaxOpenConns:    getEnvInt("DATABASE_POOL_MAX_OPEN", 100),
 			PoolConnMaxLifetime: getEnvDuration("DATABASE_POOL_MAX_LIFETIME", time.Hour),
 		},
 		Redis: &Redis{
-			Addr:         getEnv("REDIS_ADDR", ""),
+			Addr:         getEnv("REDIS_ADDR", "localhost:6379"),
 			Password:     getEnv("REDIS_PASSWORD", "default"),
 			DB:           getEnvInt("REDIS_DB", 0),
 			DialTimeout:  getEnvDuration("REDIS_DIAL_TIMEOUT", time.Second*5),

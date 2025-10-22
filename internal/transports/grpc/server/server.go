@@ -22,17 +22,15 @@ type Opts struct {
 }
 
 type GRPCServer struct {
-	Server   *grpc.Server
-	Config   *config.GRPCServer
-	Logger   logger.Logger
-	Database database.Database
-	Cache    cache.CacheService
+	Server *grpc.Server
+	Config *config.GRPCServer
+	Logger logger.Logger
 }
 
 func NewServer(opts *Opts) *GRPCServer {
 	srv := grpc.NewServer(grpc.UnaryInterceptor(interceptor.LoggerInterceptor(opts.Logger)))
 	helloworld.RegisterGreeterServer(srv, handler.NewGreeterServer(
-		service.NewUserService(&service.Opts{
+		service.NewUserService(&service.UserServiceOpts{
 			Database: opts.Database,
 			Cache:    opts.Cache,
 		}),
@@ -58,7 +56,7 @@ func (s *GRPCServer) Serve() error {
 	url := s.Config.URL
 	listener, err := net.Listen("tcp", url)
 	if err != nil {
-		s.Logger.Error("Failed to create tcp listener on %q: %v",
+		s.Logger.Error("Failed to create tcp listener",
 			logger.Field{Key: "address", Value: url},
 			logger.Field{Key: "error", Value: err.Error()},
 		)

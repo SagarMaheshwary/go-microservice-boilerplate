@@ -31,7 +31,7 @@ test-unit: ## Run only unit tests inside internal/*
 	go test $$(go list ./internal/... | grep -v ./internal/tests/) -v
 
 test-integration: ## Run only integration tests inside internal/tests
-	go test ./internal/tests/... -v
+	go test ./internal/tests/integration/... -v
 
 # Docker targets
 docker-build-dev: ## Build docker image for development (hot reload via air)

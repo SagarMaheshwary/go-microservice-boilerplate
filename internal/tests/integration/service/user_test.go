@@ -20,7 +20,7 @@ func TestUserService_FindByID(t *testing.T) {
 	u := &model.User{Name: "Alice", Email: "alice@example.com"}
 	require.NoError(t, db.DB().Create(u).Error)
 
-	userService := service.NewUserService(&service.Opts{
+	userService := service.NewUserService(&service.UserServiceOpts{
 		Database: db,
 		Cache:    redis,
 	})

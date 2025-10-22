@@ -1,15 +1,15 @@
-package server_test
+package mock
 
 import (
 	"github.com/stretchr/testify/mock"
 	"gorm.io/gorm"
 )
 
-type MockDatabaseService struct {
+type MockDatabase struct {
 	mock.Mock
 }
 
-func (m *MockDatabaseService) DB() *gorm.DB {
+func (m *MockDatabase) DB() *gorm.DB {
 	args := m.Called()
 	if db := args.Get(0); db != nil {
 		return db.(*gorm.DB)
@@ -17,7 +17,7 @@ func (m *MockDatabaseService) DB() *gorm.DB {
 	return nil
 }
 
-func (m *MockDatabaseService) Close() error {
+func (m *MockDatabase) Close() error {
 	args := m.Called()
 	return args.Error(0)
 }

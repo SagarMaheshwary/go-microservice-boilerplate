@@ -24,13 +24,14 @@ func TestNewConfigWithDefaults(t *testing.T) {
 	_, err := config.NewConfigWithOptions(config.LoaderOptions{
 		Logger: logger.NewZerologLogger("info", io.Discard),
 	})
-	require.Error(t, err)
+	require.NoError(t, err)
 }
 
 // TestNewConfigWithEnvFile verifies config loads correctly from .env file.
 func TestNewConfigWithEnvFile(t *testing.T) {
 	content := []byte(`
 	GRPC_SERVER_URL=127.0.0.1:6000
+	HTTP_SERVER_URL=127.0.0.1:8000
 	DATABASE_DSN=postgres://user:pass@localhost:5432/envdb
 	DATABASE_DRIVER=postgres
 	DATABASE_POOL_MAX_IDLE=5
@@ -64,8 +65,10 @@ func TestNewConfigWithEnvFile(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Database
 	assert.Equal(t, "127.0.0.1:6000", cfg.GRPCServer.URL)
+	assert.Equal(t, "127.0.0.1:8000", cfg.HTTPServer.URL)
+
+	// Database
 	assert.Equal(t, "postgres://user:pass@localhost:5432/envdb", cfg.Database.DSN)
 	assert.Equal(t, "postgres", cfg.Database.Driver)
 	assert.Equal(t, 5, cfg.Database.PoolMaxIdleConns)
@@ -86,19 +89,23 @@ func TestNewConfigWithEnvFile(t *testing.T) {
 // TestNewConfigWithValidEnv ensures valid env vars produce a valid config.
 func TestNewConfigWithValidEnv(t *testing.T) {
 	clearEnv(
-		"GRPC_SERVER_URL", "DATABASE_DSN", "DATABASE_DRIVER",
+		"GRPC_SERVER_URL", "HTTP_SERVER_URL", "DATABASE_DSN", "DATABASE_DRIVER",
 		"DATABASE_POOL_MAX_IDLE", "DATABASE_POOL_MAX_OPEN", "DATABASE_POOL_MAX_LIFETIME",
 		"REDIS_ADDR", "REDIS_PASSWORD", "REDIS_DB", "REDIS_DIAL_TIMEOUT",
 		"REDIS_READ_TIMEOUT", "REDIS_WRITE_TIMEOUT", "REDIS_POOL_SIZE", "REDIS_MIN_IDLE_CONNECTIONS",
 	)
 
-	os.Setenv("GRPC_SERVER_URL", "localhost:50051")
+	os.Setenv("GRPC_SERVER_URL", "localhost:6000")
+	os.Setenv("HTTP_SERVER_URL", "localhost:8000")
+
+	// Database
 	os.Setenv("DATABASE_DSN", "postgres://user:pass@localhost:5432/db")
 	os.Setenv("DATABASE_DRIVER", "mysql")
 	os.Setenv("DATABASE_POOL_MAX_IDLE", "3")
 	os.Setenv("DATABASE_POOL_MAX_OPEN", "12")
 	os.Setenv("DATABASE_POOL_MAX_LIFETIME", "45s")
 
+	// Redis
 	os.Setenv("REDIS_ADDR", "localhost:6380")
 	os.Setenv("REDIS_PASSWORD", "mypassword")
 	os.Setenv("REDIS_DB", "1")
@@ -113,8 +120,10 @@ func TestNewConfigWithValidEnv(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	assert.Equal(t, "localhost:6000", cfg.GRPCServer.URL)
+	assert.Equal(t, "localhost:8000", cfg.HTTPServer.URL)
+
 	// Database
-	assert.Equal(t, "localhost:50051", cfg.GRPCServer.URL)
 	assert.Equal(t, "postgres://user:pass@localhost:5432/db", cfg.Database.DSN)
 	assert.Equal(t, "mysql", cfg.Database.Driver)
 	assert.Equal(t, 3, cfg.Database.PoolMaxIdleConns)
@@ -150,14 +159,11 @@ func TestNewConfigWithInvalidDriver(t *testing.T) {
 // TestNewConfigWithDefaultsApplied ensures defaults are applied for optional fields.
 func TestNewConfigWithDefaultsApplied(t *testing.T) {
 	clearEnv(
-		"GRPC_SERVER_URL", "DATABASE_DSN", "DATABASE_DRIVER",
+		"GRPC_SERVER_URL", "HTTP_SERVER_URL", "DATABASE_DSN", "DATABASE_DRIVER",
 		"DATABASE_POOL_MAX_IDLE", "DATABASE_POOL_MAX_OPEN", "DATABASE_POOL_MAX_LIFETIME",
 		"REDIS_ADDR", "REDIS_PASSWORD", "REDIS_DB", "REDIS_DIAL_TIMEOUT",
 		"REDIS_READ_TIMEOUT", "REDIS_WRITE_TIMEOUT", "REDIS_POOL_SIZE", "REDIS_MIN_IDLE_CONNECTIONS",
 	)
-
-	// Required only
-	os.Setenv("DATABASE_DSN", "postgres://user:pass@localhost:5432/db")
 
 	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{
 		Logger: logger.NewZerologLogger("info", io.Discard),
@@ -166,12 +172,15 @@ func TestNewConfigWithDefaultsApplied(t *testing.T) {
 
 	// Defaults
 	assert.Equal(t, ":5000", cfg.GRPCServer.URL)
+	assert.Equal(t, ":4000", cfg.HTTPServer.URL)
+
+	assert.Equal(t, "postgres://postgres:password@localhost:5432/boilerplate?sslmode=disable", cfg.Database.DSN)
 	assert.Equal(t, "postgres", cfg.Database.Driver)
 	assert.Equal(t, 10, cfg.Database.PoolMaxIdleConns)
 	assert.Equal(t, 100, cfg.Database.PoolMaxOpenConns)
 	assert.Equal(t, time.Hour, cfg.Database.PoolConnMaxLifetime)
 
-	assert.Equal(t, "", cfg.Redis.Addr)
+	assert.Equal(t, "localhost:6379", cfg.Redis.Addr)
 	assert.Equal(t, "default", cfg.Redis.Password)
 	assert.Equal(t, 0, cfg.Redis.DB)
 	assert.Equal(t, 5*time.Second, cfg.Redis.DialTimeout)

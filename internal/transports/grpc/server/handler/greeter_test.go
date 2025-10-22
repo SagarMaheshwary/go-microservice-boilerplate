@@ -6,10 +6,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
+	testifymock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database/model"
+	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/tests/mock"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server/handler"
 	helloworld "github.com/sagarmaheshwary/go-microservice-boilerplate/proto/hello_world"
 )
@@ -18,8 +19,8 @@ import (
 func TestSayHello_Success(t *testing.T) {
 	mockUser := &model.User{ID: 1, Name: "Alice", Email: "alice@example.com"}
 
-	mockService := new(MockUserService)
-	mockService.On("FindByID", mock.Anything, uint(1)).
+	mockService := new(mock.MockUserService)
+	mockService.On("FindByID", testifymock.Anything, uint(1)).
 		Return(mockUser, nil)
 
 	s := handler.NewGreeterServer(mockService)

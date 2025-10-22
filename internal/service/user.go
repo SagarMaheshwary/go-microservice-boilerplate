@@ -17,17 +17,17 @@ type UserService interface {
 }
 
 type userService struct {
-	db    *gorm.DB
-	cache cache.CacheService
+	database *gorm.DB
+	cache    cache.CacheService
 }
 
-type Opts struct {
+type UserServiceOpts struct {
 	Database database.DatabaseService
 	Cache    cache.CacheService
 }
 
-func NewUserService(opts *Opts) UserService {
-	return &userService{db: opts.Database.DB(), cache: opts.Cache}
+func NewUserService(opts *UserServiceOpts) UserService {
+	return &userService{database: opts.Database.DB(), cache: opts.Cache}
 }
 
 func (s *userService) FindByID(ctx context.Context, id uint) (*model.User, error) {
@@ -41,7 +41,7 @@ func (s *userService) FindByID(ctx context.Context, id uint) (*model.User, error
 	}
 
 	u := &model.User{}
-	if err := s.db.First(u, id).Error; err != nil {
+	if err := s.database.First(u, id).Error; err != nil {
 		return nil, err
 	}
 

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"net/http"
 	"os"
 	"os/signal"
 
@@ -10,7 +11,8 @@ import (
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/config"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/logger"
-	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server"
+	grpcserver "github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server"
+	httpserver "github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/http/server"
 	"google.golang.org/grpc"
 )
 
@@ -41,7 +43,20 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	grpcServer := server.NewServer(&server.Opts{
+	httpServer := httpserver.NewServer(&httpserver.Opts{
+		Config:   cfg.HTTPServer,
+		Logger:   log,
+		Database: db,
+		Cache:    redisCache,
+	})
+	go func() {
+		err = httpServer.Serve()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			stop()
+		}
+	}()
+
+	grpcServer := grpcserver.NewServer(&grpcserver.Opts{
 		Config:   cfg.GRPCServer,
 		Logger:   log,
 		Database: db,
@@ -66,6 +81,10 @@ func main() {
 
 	if err := redisCache.Close(); err != nil {
 		log.Error("failed to close cache client", logger.Field{Key: "error", Value: err.Error()})
+	}
+
+	if err := httpServer.Server.Shutdown(ctx); err != nil {
+		log.Error("failed to close http server", logger.Field{Key: "error", Value: err.Error()})
 	}
 
 	log.Info("Shutdown complete!")
