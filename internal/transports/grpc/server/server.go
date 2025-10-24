@@ -28,7 +28,10 @@ type GRPCServer struct {
 }
 
 func NewServer(opts *Opts) *GRPCServer {
-	srv := grpc.NewServer(grpc.UnaryInterceptor(interceptor.LoggerInterceptor(opts.Logger)))
+	srv := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		interceptor.LoggerInterceptor(opts.Logger),
+		interceptor.MetricsInterceptor(),
+	))
 	helloworld.RegisterGreeterServer(srv, handler.NewGreeterServer(
 		service.NewUserService(&service.UserServiceOpts{
 			Database: opts.Database,

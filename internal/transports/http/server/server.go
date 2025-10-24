@@ -8,6 +8,7 @@ import (
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/config"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/logger"
+	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/observability/metrics"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/service"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/http/server/handler"
 )
@@ -17,6 +18,7 @@ type Opts struct {
 	Logger   logger.Logger
 	Database database.DatabaseService
 	Cache    cache.CacheService
+	Metrics  metrics.MetricsService
 }
 
 type HTTPServer struct {
@@ -37,6 +39,10 @@ func NewServer(opts *Opts) *HTTPServer {
 
 	mux.HandleFunc("/livez", healthHandler.Livez)
 	mux.HandleFunc("/readyz", healthHandler.Readyz)
+
+	if opts.Metrics != nil {
+		mux.Handle("/metrics", opts.Metrics.Handler())
+	}
 
 	return &HTTPServer{
 		Config: opts.Config,

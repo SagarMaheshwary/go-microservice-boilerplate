@@ -25,6 +25,7 @@ type Config struct {
 	HTTPServer *HTTPServer `validate:"required"`
 	Database   *Database   `validate:"required"`
 	Redis      *Redis      `validate:"required"`
+	Metrics    *Metrics    `validate:"required"`
 }
 
 type GRPCServer struct {
@@ -52,6 +53,10 @@ type Redis struct {
 	WriteTimeout time.Duration `validate:"gte=0"`
 	PoolSize     int           `validate:"gte=0"`
 	MinIdleConns int           `validate:"gte=0"`
+}
+
+type Metrics struct {
+	EnableDefaultMetrics bool
 }
 
 func NewConfig(log logger.Logger) (*Config, error) {
@@ -109,6 +114,9 @@ func NewConfigWithOptions(opts LoaderOptions) (*Config, error) {
 			PoolSize:     getEnvInt("REDIS_POOL_SIZE", 20),
 			MinIdleConns: getEnvInt("REDIS_MIN_IDLE_CONNECTIONS", 5),
 		},
+		Metrics: &Metrics{
+			EnableDefaultMetrics: getEnvBool("METRICS_ENABLE_DEFAULT_METRICS", false),
+		},
 	}
 
 	validate := validator.New()
@@ -144,6 +152,14 @@ func getEnvInt(key string, defaultVal int) int {
 
 func getEnvDuration(key string, defaultVal time.Duration) time.Duration {
 	if val, err := time.ParseDuration(os.Getenv(key)); err == nil {
+		return val
+	}
+
+	return defaultVal
+}
+
+func getEnvBool(key string, defaultVal bool) bool {
+	if val, err := strconv.ParseBool(os.Getenv(key)); err == nil {
 		return val
 	}
 

@@ -44,7 +44,8 @@ func TestNewConfigWithEnvFile(t *testing.T) {
 	REDIS_READ_TIMEOUT=1s
 	REDIS_WRITE_TIMEOUT=1s
 	REDIS_POOL_SIZE=30
-	REDIS_MIN_IDLE_CONNECTIONS=10`)
+	REDIS_MIN_IDLE_CONNECTIONS=10
+	METRICS_ENABLE_DEFAULT_METRICS=true`)
 
 	tmpFile, err := os.CreateTemp("", "test.env")
 	require.NoError(t, err)
@@ -68,14 +69,12 @@ func TestNewConfigWithEnvFile(t *testing.T) {
 	assert.Equal(t, "127.0.0.1:6000", cfg.GRPCServer.URL)
 	assert.Equal(t, "127.0.0.1:8000", cfg.HTTPServer.URL)
 
-	// Database
 	assert.Equal(t, "postgres://user:pass@localhost:5432/envdb", cfg.Database.DSN)
 	assert.Equal(t, "postgres", cfg.Database.Driver)
 	assert.Equal(t, 5, cfg.Database.PoolMaxIdleConns)
 	assert.Equal(t, 20, cfg.Database.PoolMaxOpenConns)
 	assert.Equal(t, 15*time.Minute, cfg.Database.PoolConnMaxLifetime)
 
-	// Redis
 	assert.Equal(t, "localhost:6379", cfg.Redis.Addr)
 	assert.Equal(t, "secret", cfg.Redis.Password)
 	assert.Equal(t, 2, cfg.Redis.DB)
@@ -84,6 +83,8 @@ func TestNewConfigWithEnvFile(t *testing.T) {
 	assert.Equal(t, 1*time.Second, cfg.Redis.WriteTimeout)
 	assert.Equal(t, 30, cfg.Redis.PoolSize)
 	assert.Equal(t, 10, cfg.Redis.MinIdleConns)
+
+	assert.Equal(t, true, cfg.Metrics.EnableDefaultMetrics)
 }
 
 // TestNewConfigWithValidEnv ensures valid env vars produce a valid config.
@@ -93,19 +94,18 @@ func TestNewConfigWithValidEnv(t *testing.T) {
 		"DATABASE_POOL_MAX_IDLE", "DATABASE_POOL_MAX_OPEN", "DATABASE_POOL_MAX_LIFETIME",
 		"REDIS_ADDR", "REDIS_PASSWORD", "REDIS_DB", "REDIS_DIAL_TIMEOUT",
 		"REDIS_READ_TIMEOUT", "REDIS_WRITE_TIMEOUT", "REDIS_POOL_SIZE", "REDIS_MIN_IDLE_CONNECTIONS",
+		"METRICS_ENABLE_DEFAULT_METRICS",
 	)
 
 	os.Setenv("GRPC_SERVER_URL", "localhost:6000")
 	os.Setenv("HTTP_SERVER_URL", "localhost:8000")
 
-	// Database
 	os.Setenv("DATABASE_DSN", "postgres://user:pass@localhost:5432/db")
 	os.Setenv("DATABASE_DRIVER", "mysql")
 	os.Setenv("DATABASE_POOL_MAX_IDLE", "3")
 	os.Setenv("DATABASE_POOL_MAX_OPEN", "12")
 	os.Setenv("DATABASE_POOL_MAX_LIFETIME", "45s")
 
-	// Redis
 	os.Setenv("REDIS_ADDR", "localhost:6380")
 	os.Setenv("REDIS_PASSWORD", "mypassword")
 	os.Setenv("REDIS_DB", "1")
@@ -114,6 +114,8 @@ func TestNewConfigWithValidEnv(t *testing.T) {
 	os.Setenv("REDIS_WRITE_TIMEOUT", "2s")
 	os.Setenv("REDIS_POOL_SIZE", "25")
 	os.Setenv("REDIS_MIN_IDLE_CONNECTIONS", "7")
+
+	os.Setenv("METRICS_ENABLE_DEFAULT_METRICS", "true")
 
 	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{
 		Logger: logger.NewZerologLogger("info", io.Discard),
@@ -139,6 +141,8 @@ func TestNewConfigWithValidEnv(t *testing.T) {
 	assert.Equal(t, 2*time.Second, cfg.Redis.WriteTimeout)
 	assert.Equal(t, 25, cfg.Redis.PoolSize)
 	assert.Equal(t, 7, cfg.Redis.MinIdleConns)
+
+	assert.Equal(t, true, cfg.Metrics.EnableDefaultMetrics)
 }
 
 // TestNewConfigWithInvalidDriver ensures unsupported driver fails validation.
@@ -163,6 +167,7 @@ func TestNewConfigWithDefaultsApplied(t *testing.T) {
 		"DATABASE_POOL_MAX_IDLE", "DATABASE_POOL_MAX_OPEN", "DATABASE_POOL_MAX_LIFETIME",
 		"REDIS_ADDR", "REDIS_PASSWORD", "REDIS_DB", "REDIS_DIAL_TIMEOUT",
 		"REDIS_READ_TIMEOUT", "REDIS_WRITE_TIMEOUT", "REDIS_POOL_SIZE", "REDIS_MIN_IDLE_CONNECTIONS",
+		"METRICS_ENABLE_DEFAULT_METRICS",
 	)
 
 	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{
@@ -170,7 +175,6 @@ func TestNewConfigWithDefaultsApplied(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	// Defaults
 	assert.Equal(t, ":5000", cfg.GRPCServer.URL)
 	assert.Equal(t, ":4000", cfg.HTTPServer.URL)
 
@@ -188,4 +192,6 @@ func TestNewConfigWithDefaultsApplied(t *testing.T) {
 	assert.Equal(t, 3*time.Second, cfg.Redis.WriteTimeout)
 	assert.Equal(t, 20, cfg.Redis.PoolSize)
 	assert.Equal(t, 5, cfg.Redis.MinIdleConns)
+
+	assert.Equal(t, false, cfg.Metrics.EnableDefaultMetrics)
 }

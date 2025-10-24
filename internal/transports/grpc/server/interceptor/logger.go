@@ -15,10 +15,10 @@ func LoggerInterceptor(log logger.Logger) grpc.UnaryServerInterceptor {
 		req interface{},
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
-	) (resp interface{}, err error) {
+	) (interface{}, error) {
 		start := time.Now()
 
-		resp, err = handler(ctx, req)
+		res, err := handler(ctx, req)
 
 		elapsedMs := fmt.Sprintf("%.2fms", time.Since(start).Seconds()*1000)
 
@@ -35,6 +35,6 @@ func LoggerInterceptor(log logger.Logger) grpc.UnaryServerInterceptor {
 			)
 		}
 
-		return resp, err
+		return res, err
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/config"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/logger"
+	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/observability/metrics"
 	grpcserver "github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server"
 	httpserver "github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/http/server"
 	"google.golang.org/grpc"
@@ -43,11 +44,14 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	metricsService := metrics.NewMetricsService(cfg.Metrics, metrics.GRPCMetrics{})
+
 	httpServer := httpserver.NewServer(&httpserver.Opts{
 		Config:   cfg.HTTPServer,
 		Logger:   log,
 		Database: db,
 		Cache:    redisCache,
+		Metrics:  metricsService,
 	})
 	go func() {
 		err = httpServer.Serve()
