@@ -11,6 +11,8 @@ import (
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server/handler"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server/interceptor"
 	helloworld "github.com/sagarmaheshwary/go-microservice-boilerplate/proto/hello_world"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
 )
 
@@ -28,10 +30,17 @@ type GRPCServer struct {
 }
 
 func NewServer(opts *Opts) *GRPCServer {
-	srv := grpc.NewServer(grpc.ChainUnaryInterceptor(
-		interceptor.LoggerInterceptor(opts.Logger),
-		interceptor.MetricsInterceptor(),
-	))
+	srv := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			interceptor.LoggerInterceptor(opts.Logger),
+			interceptor.MetricsInterceptor(),
+		),
+		grpc.StatsHandler(otelgrpc.NewServerHandler(
+			otelgrpc.WithTracerProvider(otel.GetTracerProvider()),
+			otelgrpc.WithPropagators(otel.GetTextMapPropagator()),
+		)),
+	)
+
 	helloworld.RegisterGreeterServer(srv, handler.NewGreeterServer(
 		service.NewUserService(&service.UserServiceOpts{
 			Database: opts.Database,

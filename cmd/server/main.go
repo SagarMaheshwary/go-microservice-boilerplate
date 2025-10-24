@@ -12,6 +12,7 @@ import (
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/logger"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/observability/metrics"
+	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/observability/tracing"
 	grpcserver "github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server"
 	httpserver "github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/http/server"
 	"google.golang.org/grpc"
@@ -60,6 +61,14 @@ func main() {
 		}
 	}()
 
+	tracerService, err := tracing.NewTracerService(ctx, &tracing.Opts{
+		Config: cfg.Tracing,
+		Logger: log,
+	})
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
 	grpcServer := grpcserver.NewServer(&grpcserver.Opts{
 		Config:   cfg.GRPCServer,
 		Logger:   log,
@@ -85,6 +94,10 @@ func main() {
 
 	if err := redisCache.Close(); err != nil {
 		log.Error("failed to close cache client", logger.Field{Key: "error", Value: err.Error()})
+	}
+
+	if err := tracerService.Shutdown(ctx); err != nil {
+		log.Error("failed to close tracing client", logger.Field{Key: "error", Value: err.Error()})
 	}
 
 	if err := httpServer.Server.Shutdown(ctx); err != nil {

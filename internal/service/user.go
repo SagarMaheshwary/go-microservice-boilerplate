@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/cache"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database/model"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"gorm.io/gorm"
 )
 
@@ -27,10 +30,18 @@ type UserServiceOpts struct {
 }
 
 func NewUserService(opts *UserServiceOpts) UserService {
-	return &userService{database: opts.Database.DB(), cache: opts.Cache}
+	return &userService{
+		database: opts.Database.DB(),
+		cache:    opts.Cache,
+	}
 }
 
 func (s *userService) FindByID(ctx context.Context, id uint) (*model.User, error) {
+	tr := otel.Tracer("UserService")
+	ctx, span := tr.Start(ctx, "FindByID")
+	span.SetAttributes(attribute.String("UserId", strconv.Itoa(int(id))))
+	defer span.End()
+
 	cacheKey := fmt.Sprintf("user:%d", id)
 
 	// Try cache

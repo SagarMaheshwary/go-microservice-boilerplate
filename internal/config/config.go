@@ -26,6 +26,7 @@ type Config struct {
 	Database   *Database   `validate:"required"`
 	Redis      *Redis      `validate:"required"`
 	Metrics    *Metrics    `validate:"required"`
+	Tracing    *Tracing    `validate:"required"`
 }
 
 type GRPCServer struct {
@@ -57,6 +58,11 @@ type Redis struct {
 
 type Metrics struct {
 	EnableDefaultMetrics bool
+}
+
+type Tracing struct {
+	ServiceName  string `validate:"required"`
+	CollectorURL string `validate:"required,hostname_port"`
 }
 
 func NewConfig(log logger.Logger) (*Config, error) {
@@ -116,6 +122,10 @@ func NewConfigWithOptions(opts LoaderOptions) (*Config, error) {
 		},
 		Metrics: &Metrics{
 			EnableDefaultMetrics: getEnvBool("METRICS_ENABLE_DEFAULT_METRICS", false),
+		},
+		Tracing: &Tracing{
+			ServiceName:  getEnv("TRACING_SERVICE_NAME", "go-microservice-boilerplate"),
+			CollectorURL: getEnv("TRACING_COLLECTOR_URL", "localhost:4318"),
 		},
 	}
 

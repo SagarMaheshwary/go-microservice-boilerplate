@@ -6,6 +6,7 @@ import (
 
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/service"
 	helloworld "github.com/sagarmaheshwary/go-microservice-boilerplate/proto/hello_world"
+	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -20,6 +21,10 @@ func NewGreeterServer(userService service.UserService) *GreeterServer {
 }
 
 func (g *GreeterServer) SayHello(ctx context.Context, in *helloworld.SayHelloRequest) (*helloworld.SayHelloResponse, error) {
+	tr := otel.Tracer("hello_world.Greeter")
+	ctx, span := tr.Start(ctx, "helloworld.SayHello")
+	defer span.End()
+
 	user, err := g.userService.FindByID(ctx, uint(in.UserId))
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "user not found")
