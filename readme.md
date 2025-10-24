@@ -2,30 +2,31 @@
 
 A minimal, production-ready boilerplate for building gRPC microservices in Go.
 
-This repository provides a clean foundation with:
+## Table of Contents
 
-- Config and Logger
-- Database setup with connection pooling
-- gRPC server with an example RPC to demonstrate service structure
-- Multi-stage Docker builds for both development and production
-- Makefile with useful developer commands
-- Unit and integration tests
-
-Use this as a starting point for your own services — just replace the example RPC with your own application logic.
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Requirements](#requirements)
+- [Getting Started](#getting-started)
+- [Database & Migrations](#database--migrations)
+- [Seeders](#seeders)
+- [Running the Service](#running-the-service)
+- [Testing](#testing)
+- [Test gRPC](#test-grpc)
+- [Observability](#observability)
+- [Tutorial Series](#tutorial-series)
 
 ## Features
 
-- Clean and extensible project structure
-- Config package with validation (env-driven)
-- Database package with pooling & safe close
-- gRPC server with a working example RPC
-- Graceful shutdown (cleanly stops gRPC server and background routines on interrupt)
-- Multi-stage Dockerfile
-  - Development: hot reload with Air
-  - Production: optimized binary build
-- Makefile for development, testing, and Docker tasks
-- Unit & integration tests (using Testify + Testcontainers)
-- Migrations & seeders with Makefile commands
+- **Modular and extensible architecture** — clear separation of concerns across config, server, database, cache, and observability layers
+- **Config-driven setup** — environment-based configuration with validation
+- **Database integration** — connection pooling, migrations, and graceful shutdown
+- **Redis caching layer** — simple set/get usage example included
+- **gRPC server** — example service, interceptors, and graceful shutdown
+- **Observability** — integrated logging, Prometheus metrics, and OpenTelemetry tracing
+- **Health checks** — `/livez` and `/readyz` REST endpoints
+- **Testing-ready** — unit and integration tests using Testify and Testcontainers
+- **Developer-friendly tooling** — Makefile commands, hot reload (Air), and multi-stage Docker builds
 
 ## Project Structure
 
@@ -34,25 +35,34 @@ Use this as a starting point for your own services — just replace the example 
 ├── proto/          # Protobuf definitions and generated code
 ├── cmd/            # Service entrypoint (main.go)
 ├── internal/       # Core application code
-│   ├── config/         # Load and manage environment configurations
-│   ├── logger/         # Zerolog-based structured logging
-│   ├── service/        # Services for application business logic
-│   └── database/       # Database initialization and connection handling
-│       ├── migrations/     # Database migrations
-│       ├── seeder/         # Seeders for generating fake data for dev/test
-│       └── model/          # GORM models
-│   └── transports/     # Different communication protocols (e.g grpc, http, websocket). Each protocol can include both server/ and client/ implementations to keep responsibilities organized.
-│       ├── grpc/           # gRPC transport
-│       │   ├── server/         # gRPC server setup and service registration
-│       │   │   ├── handler/         # RPC handlers
-│       │   │   └── interceptor/     # gRPC interceptors
-│       │   └── client/         # (Optional) Place for gRPC clients (e.g., microservice-to-microservice communication)
-│   └── tests/          # integration tests
-│       └── testutils/      # test helpers
-├── Dockerfile      # Multi-stage build for dev/prod
-├── Makefile        # Workflow automation (build, run, test, docker)
-├── .env.example    # Example environment variables
-└── readme.md       # Project documentation
+│   ├── config/       # Load and manage environment configurations
+│   ├── logger/       # Zerolog-based structured logging
+│   ├── service/      # Services for application business logic
+│   ├── cache/        # Redis caching
+│   └── database/     # Database initialization and connection handling
+│       ├── migrations/   # Database migrations
+│       ├── seeder/       # Seeders for generating fake data for dev/test
+│       └── model/        # GORM models
+│   └── transports/   # Different communication protocols (e.g grpc, http, websocket). Each protocol can include both server/ and client/ implementations to keep responsibilities organized.
+│       └── grpc/         # gRPC transport
+│           ├── server/         # gRPC server setup and service registration
+│           │   ├── handler/         # RPC handlers
+│           │   └── interceptor/     # gRPC interceptors
+│           └── client/         # (Optional) Place for gRPC clients (e.g., microservice-to-microservice communication)
+│       └── http/         # HTTP transport
+│           └── server/         # HTTP server setup, api routes (healthchecks/metrics)
+│               └── handler/         # Route handlers
+│   └── observability/
+│       ├── metrics/      # Prometheus metrics
+│       └── tracing/      # OpenTelemetry tracing
+│   └── tests/
+│       ├── integration/  # Integration tests
+│       ├── mock/         # Mocks for unit tests
+│       └── testutils/    # Test helpers
+├── Dockerfile         # Multi-stage build for dev/prod
+├── Makefile           # Workflow automation (build, run, test, docker)
+├── docker-compose.yml # Run Postgres, Redis, and Jaeger containers
+└── readme.md          # Project documentation
 ```
 
 ## Requirements
@@ -106,6 +116,12 @@ Copy the example environment file and adjust values as needed:
 cp .env.example .env
 ```
 
+Start Postgres, Redis, and Jaeger (optional) containers via docker-compose.yaml:
+
+```bash
+docker compose up
+```
+
 ## Database & Migrations
 
 - This boilerplate supports Postgres, SQLite, MySQL (via GORM).
@@ -135,12 +151,17 @@ go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 go install -tags 'sqlite' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 ```
 
-#### Makefile commands
+#### Migration commands
 
 ```bash
-make migrate-up dsn="postgres://username:password@localhost:5432/dbname?sslmode=disable"    # Apply migrations
-make migrate-down dsn="postgres://username:password@localhost:5432/dbname?sslmode=disable"  # Rollback migrations
-make migrate-new name=create_users_table                                                    # Create a new migration file
+# Apply migrations
+make migrate-up dsn="postgres://postgres:password@localhost:5432/boilerplate?sslmode=disable"
+
+# Rollback migrations
+make migrate-down dsn="postgres://postgres:password@localhost:5432/boilerplate?sslmode=disable"
+
+# Create a new migration file
+make migrate-new name=create_users_table
 ```
 
 ## Seeders
@@ -185,7 +206,7 @@ Or, if you already have your own Postgres instance running, update the configura
 - Unit tests with mocks (using Testify).
 - Integration tests with [Testcontainers](https://github.com/testcontainers/testcontainers-go):
   - The boilerplate is set up to support integration testing with real services.
-  - An example test in `internal/tests/service/` directory is included that spins up a Postgres container and verifies the `UserService` against a real database.
+  - An example test in `internal/tests/integration/service/` directory is included that spins up Postgres and Redis containers and verifies the `UserService` against a real database/cache.
 
 ```bash
 make test             # all tests
@@ -214,14 +235,36 @@ Expected response:
 }
 ```
 
-### Tutorial Series
+## Observability
 
-This boilerplate is built as part of the Go Microservices Boilerplate Series: From Hello World to Production.
+This boilerplate includes built-in observability tools to help you monitor, debug, and understand your services in production.
+
+### Logging (Structured JSON)
+
+- Centralized, structured logging using zerolog.
+- Outputs clean, machine-readable **JSON logs**.
+- Easily integrate with log aggregators like **Loki**, **ELK**, or **CloudWatch**.
+
+### Metrics (Prometheus)
+
+- Integrated Prometheus metrics via a dedicated `MetricsService`.
+- Exposes `/metrics` endpoint for HTTP scraping.
+- Includes custom **gRPC metrics interceptor** which tracks request count and latency per RPC method.
+- Easily extendable with custom business metrics.
+
+### Tracing (OpenTelemetry + OTLP)
+
+- OpenTelemetry-based tracing using the **OTLP HTTP exporter**
+- Vendor-neutral — works with Jaeger, Grafana Tempo, Datadog, New Relic, etc.
+- **Jaeger** is included in `docker-compose.yml` for quick local visualization
+- Automatic trace propagation between gRPC services via `grpc.StatsHandler`
+
+Together, **metrics**, **logs**, and **tracing** provide full visibility into your system’s behavior — helping you detect latency issues, understand dependencies, and debug bottlenecks efficiently.
+
+## Tutorial Series
+
+This boilerplate is built as part of the **Go Microservices Boilerplate Series: From Hello World to Production**.
 
 - [Part 1](https://dev.to/sagarmaheshwary/go-microservices-boilerplate-series-from-hello-world-to-production-part-1-46k5) – Project setup: config, logging, gRPC server, graceful shutdowns, Dockerfile, and Makefile.
 - [Part 2](https://dev.to/sagarmaheshwary/go-microservices-boilerplate-series-from-hello-world-to-production-part-2-428b) – Database integration: Postgres with GORM, migrations, seeders, service layer, and integration tests.
 - Part 3 (coming soon) – Redis caching, observability (Prometheus + OpenTelemetry), and health checks.
-
----
-
-Found this project useful? Don’t forget to ⭐ the repo and share it with others!
