@@ -12,12 +12,3 @@ services:
     image: redis:7.2
     ports:
       - 6379:6379
-
-  jaeger:
-    image: jaegertracing/all-in-one:1.56
-    container_name: jaegar
-    ports:
-      - "16686:16686" # UI
-      - "4318:4318" # OTLP HTTP
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true

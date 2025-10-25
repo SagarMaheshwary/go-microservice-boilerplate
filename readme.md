@@ -61,7 +61,7 @@ A minimal, production-ready boilerplate for building gRPC microservices in Go.
 │       └── testutils/    # Test helpers
 ├── Dockerfile         # Multi-stage build for dev/prod
 ├── Makefile           # Workflow automation (build, run, test, docker)
-├── docker-compose.yml # Run Postgres, Redis, and Jaeger containers
+├── docker-compose.yml # Postgres/Redis
 └── readme.md          # Project documentation
 ```
 
@@ -116,7 +116,7 @@ Copy the example environment file and adjust values as needed:
 cp .env.example .env
 ```
 
-Start Postgres, Redis, and Jaeger (optional) containers via docker-compose.yaml:
+Start Postgres and Redis containers via docker-compose.yaml:
 
 ```bash
 docker compose up
@@ -256,7 +256,6 @@ This boilerplate includes built-in observability tools to help you monitor, debu
 
 - OpenTelemetry-based tracing using the **OTLP HTTP exporter**
 - Vendor-neutral — works with Jaeger, Grafana Tempo, Datadog, New Relic, etc.
-- **Jaeger** is included in `docker-compose.yml` for quick local visualization
 - Automatic trace propagation between gRPC services via `grpc.StatsHandler`
 
 Together, **metrics**, **logs**, and **tracing** provide full visibility into your system’s behavior — helping you detect latency issues, understand dependencies, and debug bottlenecks efficiently.
@@ -267,4 +266,4 @@ This boilerplate is built as part of the **Go Microservices Boilerplate Series: 
 
 - [Part 1](https://dev.to/sagarmaheshwary/go-microservices-boilerplate-series-from-hello-world-to-production-part-1-46k5) – Project setup: config, logging, gRPC server, graceful shutdowns, Dockerfile, and Makefile.
 - [Part 2](https://dev.to/sagarmaheshwary/go-microservices-boilerplate-series-from-hello-world-to-production-part-2-428b) – Database integration: Postgres with GORM, migrations, seeders, service layer, and integration tests.
-- Part 3 (coming soon) – Redis caching, observability (Prometheus + OpenTelemetry), and health checks.
+- Part 3 (coming soon) – Redis caching, observability (Prometheus metrics + OpenTelemetry tracing), and health checks.
