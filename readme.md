@@ -116,7 +116,7 @@ Copy the example environment file and adjust values as needed:
 cp .env.example .env
 ```
 
-Start Postgres and Redis containers via docker-compose.yaml:
+Start Postgres and Redis containers via `docker-compose.yaml`:
 
 ```bash
 docker compose up
@@ -207,6 +207,8 @@ Or, if you already have your own Postgres instance running, update the configura
 - Integration tests with [Testcontainers](https://github.com/testcontainers/testcontainers-go):
   - The boilerplate is set up to support integration testing with real services.
   - An example test in `internal/tests/integration/service/` directory is included that spins up Postgres and Redis containers and verifies the `UserService` against a real database/cache.
+
+You can use below make commands to run tests:
 
 ```bash
 make test             # all tests
