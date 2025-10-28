@@ -79,7 +79,7 @@ migrate-new: ## Create a new migration file.
 	@migrate create -ext sql -dir $(MIGRATIONS_DIR) -seq $(name)
 
 seed: ## Run seeders
-	go run cmd/cli/main.go seed
+	go run cmd/cli/main.go seed $(dsn)
 
 lint:
 	golangci-lint run

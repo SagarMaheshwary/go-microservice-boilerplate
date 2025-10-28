@@ -26,6 +26,11 @@ func main() {
 
 	switch cmd {
 	case "seed":
+		if len(os.Args) > 2 {
+			cfg.Database.DSN = os.Args[2]
+			log.Info("Using DSN from argument")
+		}
+
 		db, err := database.NewDatabase(&database.Opts{
 			Config: cfg.Database,
 			Logger: log,
