@@ -1,4 +1,28 @@
+name: microservices
+
+networks:
+  microservices_net:
+    driver: bridge
+
 services:
+  app:
+    build:
+      context: .
+      target: development
+    container_name: go-microservice-boilerplate
+    ports:
+      - 4000:4000
+      - 5000:5000
+    volumes:
+      - ./:/app
+    networks:
+      - microservices_net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   postgres:
     image: postgres:15
     environment:
@@ -7,8 +31,31 @@ services:
       POSTGRES_DB: boilerplate
     ports:
       - 5432:5432
-
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+    networks:
+      - microservices_net
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U postgres -d boilerplate"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  
   redis:
     image: redis:7.2
     ports:
       - 6379:6379
+    volumes:
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - microservices_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres_data:

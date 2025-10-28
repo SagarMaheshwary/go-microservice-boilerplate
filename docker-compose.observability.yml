@@ -1,0 +1,41 @@
+networks:
+  microservices_microservices_net:
+    external: true
+
+services:
+  grafana:
+    image: grafana/grafana-enterprise:11.3.0
+    container_name: grafana
+    ports:
+      - 3000:3000
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - microservices_microservices_net
+    depends_on:
+      - prometheus
+
+  prometheus:
+    image: prom/prometheus:v2.55.0
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - microservices_microservices_net
+
+  jaeger: # uses default in-memory store
+    image: jaegertracing/all-in-one:1.56
+    container_name: jaegar
+    ports:
+      - 16686:16686 # UI
+      - 4318:4318 # OTLP HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - microservices_microservices_net
+
+volumes:
+  prometheus_data:
