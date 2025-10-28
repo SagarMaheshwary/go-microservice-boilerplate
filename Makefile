@@ -80,3 +80,6 @@ migrate-new: ## Create a new migration file.
 
 seed: ## Run seeders
 	go run cmd/cli/main.go seed
+
+lint:
+	golangci-lint run

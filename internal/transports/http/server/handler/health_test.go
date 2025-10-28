@@ -2,10 +2,12 @@ package handler_test
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/logger"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/service"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/tests/mock"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/http/server/handler"
@@ -15,8 +17,13 @@ import (
 
 // TestLivezHandler_OK verifies that /livez always returns 200 and {"status": "ok"}.
 func TestLivezHandler_OK(t *testing.T) {
+	log := logger.NewZerologLogger("info", io.Discard)
 	mockSvc := new(mock.MockHealthService)
-	h := handler.NewHealthHandler(mockSvc)
+
+	h := handler.NewHealthHandler(&handler.Opts{
+		HealthService: mockSvc,
+		Logger:        log,
+	})
 
 	req := httptest.NewRequest(http.MethodGet, "/livez", nil)
 	rec := httptest.NewRecorder()
@@ -34,12 +41,17 @@ func TestLivezHandler_OK(t *testing.T) {
 
 // TestReadyzHandler_Ready verifies that /readyz returns 200 when status is "ready".
 func TestReadyzHandler_Ready(t *testing.T) {
+	log := logger.NewZerologLogger("info", io.Discard)
+
 	mockSvc := new(mock.MockHealthService)
 	mockSvc.On("Check", testifymock.Anything).
 		Return(service.HealthStatus{Status: "ready"}).
 		Once()
 
-	h := handler.NewHealthHandler(mockSvc)
+	h := handler.NewHealthHandler(&handler.Opts{
+		HealthService: mockSvc,
+		Logger:        log,
+	})
 
 	req := httptest.NewRequest(http.MethodGet, "/readyz", nil)
 	rec := httptest.NewRecorder()
@@ -59,12 +71,17 @@ func TestReadyzHandler_Ready(t *testing.T) {
 
 // TestReadyzHandler_NotReady verifies that /readyz returns 503 when status != "ready".
 func TestReadyzHandler_NotReady(t *testing.T) {
+	log := logger.NewZerologLogger("info", io.Discard)
+
 	mockSvc := new(mock.MockHealthService)
 	mockSvc.On("Check", testifymock.Anything).
 		Return(service.HealthStatus{Status: "unready", Details: map[string]string{"db": "down"}}).
 		Once()
 
-	h := handler.NewHealthHandler(mockSvc)
+	h := handler.NewHealthHandler(&handler.Opts{
+		HealthService: mockSvc,
+		Logger:        log,
+	})
 
 	req := httptest.NewRequest(http.MethodGet, "/readyz", nil)
 	rec := httptest.NewRecorder()

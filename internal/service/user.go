@@ -47,7 +47,11 @@ func (s *userService) FindByID(ctx context.Context, id uint) (*model.User, error
 	// Try cache
 	if cached, err := s.cache.Get(ctx, cacheKey); err == nil && cached != "" {
 		var u model.User
-		json.Unmarshal([]byte(cached), &u)
+
+		if err := json.Unmarshal([]byte(cached), &u); err != nil {
+			return nil, err
+		}
+
 		return &u, nil
 	}
 
@@ -55,9 +59,11 @@ func (s *userService) FindByID(ctx context.Context, id uint) (*model.User, error
 	if err := s.database.First(u, id).Error; err != nil {
 		return nil, err
 	}
-
 	data, _ := json.Marshal(u)
-	s.cache.Set(ctx, cacheKey, data, time.Minute) // cache for 1 minute
+
+	if err := s.cache.Set(ctx, cacheKey, data, time.Minute); err != nil { // cache for 1 minute
+		return nil, err
+	}
 
 	return u, nil
 }

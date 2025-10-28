@@ -30,12 +30,14 @@ type HTTPServer struct {
 func NewServer(opts *Opts) *HTTPServer {
 	mux := http.NewServeMux()
 
-	healthHandler := handler.NewHealthHandler(
-		service.NewHealthService(&service.HealthServiceOpts{
-			Database: opts.Database,
-			Cache:    opts.Cache,
-		}),
-	)
+	healthService := service.NewHealthService(&service.HealthServiceOpts{
+		Database: opts.Database,
+		Cache:    opts.Cache,
+	})
+	healthHandler := handler.NewHealthHandler(&handler.Opts{
+		HealthService: healthService,
+		Logger:        opts.Logger,
+	})
 
 	mux.HandleFunc("/livez", healthHandler.Livez)
 	mux.HandleFunc("/readyz", healthHandler.Readyz)

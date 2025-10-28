@@ -38,11 +38,15 @@ func TestNewConfigWithEnvFile(t *testing.T) {
 
 	tmpFile, err := os.CreateTemp("", "test.env")
 	require.NoError(t, err)
-	defer os.Remove(tmpFile.Name())
+
+	defer func() {
+		require.NoError(t, os.Remove(tmpFile.Name()))
+	}()
 
 	_, err = tmpFile.Write(content)
 	require.NoError(t, err)
-	tmpFile.Close()
+
+	require.NoError(t, tmpFile.Close())
 
 	envLoader := func(path string) error {
 		return env.Load(path)
@@ -67,10 +71,10 @@ func TestNewConfigWithValidEnv(t *testing.T) {
 		"GRPC_SERVER_URL", "DATABASE_DRIVER", "REDIS_ADDR", "TRACING_SERVICE_NAME",
 	)
 
-	os.Setenv("GRPC_SERVER_URL", "localhost:6001")
-	os.Setenv("DATABASE_DRIVER", "mysql")
-	os.Setenv("REDIS_ADDR", "redis:6379")
-	os.Setenv("TRACING_SERVICE_NAME", "user-service")
+	require.NoError(t, os.Setenv("GRPC_SERVER_URL", "localhost:6001"))
+	require.NoError(t, os.Setenv("DATABASE_DRIVER", "mysql"))
+	require.NoError(t, os.Setenv("REDIS_ADDR", "redis:6379"))
+	require.NoError(t, os.Setenv("TRACING_SERVICE_NAME", "user-service"))
 
 	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{
 		Logger: logger.NewZerologLogger("info", io.Discard),
@@ -87,9 +91,9 @@ func TestNewConfigWithValidEnv(t *testing.T) {
 func TestNewConfigWithInvalidDriver(t *testing.T) {
 	clearEnv("GRPC_SERVER_URL", "DATABASE_DSN", "DATABASE_DRIVER")
 
-	os.Setenv("GRPC_SERVER_URL", "localhost:50051")
-	os.Setenv("DATABASE_DSN", "postgres://user:pass@localhost:5432/db")
-	os.Setenv("DATABASE_DRIVER", "oracle") // invalid
+	require.NoError(t, os.Setenv("GRPC_SERVER_URL", "localhost:50051"))
+	require.NoError(t, os.Setenv("DATABASE_DSN", "postgres://user:pass@localhost:5432/db"))
+	require.NoError(t, os.Setenv("DATABASE_DRIVER", "oracle")) // invalid
 
 	cfg, err := config.NewConfigWithOptions(config.LoaderOptions{
 		Logger: logger.NewZerologLogger("info", io.Discard),

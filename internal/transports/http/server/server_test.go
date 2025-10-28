@@ -69,7 +69,10 @@ func TestServeListener(t *testing.T) {
 
 	lis, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
-	defer lis.Close()
+
+	defer func() {
+		require.NoError(t, lis.Close())
+	}()
 
 	go func() {
 		_ = srv.ServeListener(lis)
@@ -114,7 +117,10 @@ func TestServeListener_Metrics(t *testing.T) {
 
 	lis, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
-	defer lis.Close()
+
+	defer func() {
+		require.NoError(t, lis.Close())
+	}()
 
 	go func() {
 		_ = srv.ServeListener(lis)
@@ -128,7 +134,11 @@ func TestServeListener_Metrics(t *testing.T) {
 	// Check that /metrics returns 200
 	resp, err := http.Get("http://" + lis.Addr().String() + "/metrics")
 	require.NoError(t, err)
-	defer resp.Body.Close()
+
+	defer func() {
+		require.NoError(t, resp.Body.Close())
+	}()
+
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 
 	// Shutdown server gracefully
