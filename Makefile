@@ -6,7 +6,7 @@ MIGRATIONS_DIR := internal/database/migrations
         docker-build-dev docker-build-prod \
         docker-run-dev docker-run-prod clean \
 				migrate-up migrate-down migrate-new \
-				test-unit test-integration seed
+				test-unit test-integration seed lint
 
 help: ## Show this help
 	@echo "Available make commands:"
@@ -81,5 +81,5 @@ migrate-new: ## Create a new migration file.
 seed: ## Run seeders
 	go run cmd/cli/main.go seed $(dsn)
 
-lint:
+lint: ## Run golangci-lint to check code quality
 	golangci-lint run
