@@ -70,10 +70,6 @@ func TestServeListener(t *testing.T) {
 	lis, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
 
-	defer func() {
-		require.NoError(t, lis.Close())
-	}()
-
 	go func() {
 		_ = srv.ServeListener(lis)
 	}()
@@ -117,10 +113,6 @@ func TestServeListener_Metrics(t *testing.T) {
 
 	lis, err := net.Listen("tcp", ":0")
 	require.NoError(t, err)
-
-	defer func() {
-		require.NoError(t, lis.Close())
-	}()
 
 	go func() {
 		_ = srv.ServeListener(lis)
