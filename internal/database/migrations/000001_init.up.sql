@@ -1,0 +1,2 @@
+-- no-op migration
+-- this file exists to satisfy embed patterns

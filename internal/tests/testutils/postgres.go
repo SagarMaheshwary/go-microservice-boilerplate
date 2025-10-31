@@ -2,8 +2,10 @@ package testutils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
 	"time"
 
@@ -76,9 +78,14 @@ func SetupPostgres(t *testing.T) database.DatabaseService {
 	m, err := migrate.NewWithInstance("iofs", d, dbName, driver)
 	require.NoError(t, err)
 
-	err = m.Up()
-	if err != nil && err != migrate.ErrNoChange {
-		t.Fatalf("failed to run migrations: %v", err)
+	if err := m.Up(); err != nil {
+		if errors.Is(err, migrate.ErrNoChange) {
+			// no migrations or already up to date
+		} else if strings.Contains(err.Error(), "no migration files") {
+			// no migration files found, skipping...
+		} else {
+			t.Fatalf("failed to run migrations: %v", err)
+		}
 	}
 
 	return db

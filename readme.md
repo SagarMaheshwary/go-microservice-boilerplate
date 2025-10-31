@@ -8,25 +8,29 @@ A minimal, production-ready boilerplate for building gRPC microservices in Go.
 - [Project Structure](#project-structure)
 - [Requirements](#requirements)
 - [Getting Started](#getting-started)
+- [Running the Service](#running-the-service)
 - [Database & Migrations](#database--migrations)
 - [Seeders](#seeders)
-- [Running the Service](#running-the-service)
 - [Testing](#testing)
-- [Test gRPC](#test-grpc)
 - [Observability](#observability)
+- [Examples branch](#examples-branch)
 - [Tutorial Series](#tutorial-series)
 
 ## Features
 
-- **Modular and extensible architecture** — clear separation of concerns across config, server, database, cache, and observability layers
-- **Config-driven setup** — environment-based configuration with validation
-- **Database integration** — connection pooling, migrations, and graceful shutdown
-- **Redis caching layer** — simple set/get usage example included
-- **gRPC server** — example service, interceptors, and graceful shutdown
-- **Observability** — integrated logging, Prometheus metrics, and OpenTelemetry tracing
-- **Health checks** — `/livez` and `/readyz` REST endpoints
-- **Testing-ready** — unit and integration tests using Testify and Testcontainers
-- **Developer-friendly tooling** — Makefile commands, hot reload (Air), and multi-stage Docker builds
+- **Modular, extensible architecture** — clean separation of concerns for scalability and maintainability
+- **Config-driven setup** — flexible environment-based configuration management
+- **Database integration** — built-in migrations and seeders for easy setup
+- **Redis caching layer** — ready-to-use caching for performance optimization
+- **Graceful shutdown** — proper cleanup of resources on service termination
+- **gRPC server** — includes structured logging interceptor
+- **Observability ready** — integrated logging, Prometheus metrics, and OpenTelemetry tracing
+- **Health checks** — `/livez` and `/readyz` endpoints for service monitoring
+- **Testing ready** — unit and integration testing with Testify and Testcontainers
+- **Developer tooling** — Makefile commands, hot reload (Air), and multi-stage Docker builds
+
+> **Looking for a complete working example?**
+> Check out the [examples](https://github.com/SagarMaheshwary/go-microservice-boilerplate/tree/examples) branch — includes sample gRPC service, Redis cache usage, migrations, seeders, metrics, tracing, and a full Docker-based observability stack.
 
 ## Project Structure
 
@@ -38,7 +42,7 @@ A minimal, production-ready boilerplate for building gRPC microservices in Go.
 │   ├── config/       # Load and manage environment configurations
 │   ├── logger/       # Zerolog-based structured logging
 │   ├── service/      # Services for application business logic
-│   ├── cache/        # Redis caching
+│   ├── cache/        # Redis
 │   └── database/     # Database initialization and connection handling
 │       ├── migrations/   # Database migrations
 │       ├── seeder/       # Seeders for generating fake data for dev/test
@@ -89,7 +93,7 @@ Run the following to see all available commands:
 make help
 ```
 
-> Not every command is documented in the README, so `make help` is the best way to explore what’s available.
+> Tip: Not every command is listed in the README — use `make help` to see all available workflows (build, lint, test, migrate-up, etc.).
 
 #### Installing Make
 
@@ -116,21 +120,38 @@ Copy the example environment file and adjust values as needed:
 cp .env.example .env
 ```
 
-Start Postgres and Redis containers via `docker-compose.yaml`:
+## Running the Service
+
+Run locally
+
+```bash
+make run     # Production mode, build and run binary
+make run-dev # Development mode, reloads application on file change
+```
+
+Run inside Docker
+
+```bash
+make docker-run     # Production mode
+make docker-run-dev # Development mode, reloads application on file change
+```
+
+This boilerplate also includes a `docker-compose.yml` with Postgres and Redis services. You can bring it up with:
 
 ```bash
 docker compose up
 ```
 
+Or, if you already have your own Postgres/Redis instance running, update the configuration accordingly.
+
 ## Database & Migrations
 
-- This boilerplate supports Postgres, SQLite, MySQL (via GORM).
-- Uses [golang-migrate](https://github.com/golang-migrate/migrate) CLI for schema migrations.
-- Example migration included: `users` table.
+This boilerplate supports Postgres, SQLite, MySQL (via GORM) and uses [golang-migrate](https://github.com/golang-migrate/migrate) CLI for schema migrations.
+
+By default, this boilerplate is set up for Postgres.
 
 #### Install the migrate CLI
 
-By default, this boilerplate is set up for Postgres.
 Install the CLI with the Postgres driver:
 
 ```bash
@@ -166,47 +187,20 @@ make migrate-new name=create_users_table
 
 ## Seeders
 
-- Seeders are stored in `internal/database/seeder/`.
-- Example `users` seeder included.
-- Seeders are run via a dedicated CLI:
+Seeders are stored in `internal/database/seeder/` and run via a dedicated CLI `cmd/cli/` (extensible if you want to add more developer commands later):
 
 ```bash
 make seed
 ```
 
-- Each seeder logs progress, so you can see which one is running and where it fails.
-- CLI entrypoint is under `cmd/cli/` — extensible if you want to add more developer commands later.
-
-## Running the Service
-
-Run locally
-
-```bash
-make run     # Production mode, build and run binary
-make run-dev # Development mode, reloads application on file change
-```
-
-Run inside Docker
-
-```bash
-make docker-run     # Production mode
-make docker-run-dev # Development mode, reloads application on file change
-```
-
-This boilerplate also includes a `docker-compose.yml` with a Postgres service. You can bring it up with:
-
-```bash
-docker compose up -d
-```
-
-Or, if you already have your own Postgres instance running, update the configuration accordingly.
+Each seeder logs progress, so you can see which one is running and where it fails.
 
 ## Testing
 
 - Unit tests with mocks (using Testify).
 - Integration tests with [Testcontainers](https://github.com/testcontainers/testcontainers-go):
   - The boilerplate is set up to support integration testing with real services.
-  - An example test in `internal/tests/integration/service/` directory is included that spins up Postgres and Redis containers and verifies the `UserService` against a real database/cache.
+  - Checkout `HealthService` integration tests in `internal/tests/integrations/service/health.go` that spins up Postgres and Redis containers and test against them.
 
 You can use below make commands to run tests:
 
@@ -214,27 +208,6 @@ You can use below make commands to run tests:
 make test             # all tests
 make test-unit        # unit tests only
 make test-integration # integration tests only
-```
-
-## Test gRPC
-
-After running the app (e.g via make docker-run-dev), you can test the example RPC using [grpcurl](https://github.com/fullstorydev/grpcurl)
-
-```bash
-grpcurl -d '{"user_id": 1}' -proto ./proto/hello_world/hello_world.proto -plaintext localhost:5000 hello_world.Greeter/SayHello
-```
-
-Expected response:
-
-```json
-{
-  "message": "Hello, World!",
-  "user": {
-    "id": "1",
-    "name": "Alice",
-    "email": "alice@example.com"
-  }
-}
 ```
 
 ## Observability
@@ -251,7 +224,7 @@ This boilerplate includes built-in observability tools to help you monitor, debu
 
 - Integrated Prometheus metrics via a dedicated `MetricsService`.
 - Exposes `/metrics` endpoint for HTTP scraping.
-- Includes custom **gRPC metrics interceptor** which tracks request count and latency per RPC method.
+- `example` branch includes custom **gRPC metrics interceptor** which tracks request count and latency per RPC method.
 - Easily extendable with custom business metrics.
 
 ### Tracing (OpenTelemetry + OTLP)
@@ -261,6 +234,19 @@ This boilerplate includes built-in observability tools to help you monitor, debu
 - Automatic trace propagation between gRPC services via `grpc.StatsHandler`
 
 Together, **metrics**, **logs**, and **tracing** provide full visibility into your system’s behavior — helping you detect latency issues, understand dependencies, and debug bottlenecks efficiently.
+
+## Examples Branch
+
+A complete working demo is available in the [examples](https://github.com/SagarMaheshwary/go-microservice-boilerplate/tree/examples) branch. It includes:
+
+- Sample gRPC service & handler (`SayHello`)
+- User service example with DB and Redis
+- Migrations & seeders
+- Prometheus metrics + OpenTelemetry tracing
+- docker-compose setup for Grafana, Prometheus, Jaeger
+- Example dashboard & trace (SayHello → UserService)
+
+> See the `examples` branch README for setup and usage instructions.
 
 ## Tutorial Series
 

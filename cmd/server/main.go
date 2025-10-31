@@ -45,7 +45,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	metricsService := metrics.NewMetricsService(cfg.Metrics, metrics.GRPCMetrics{})
+	metricsService := metrics.NewMetricsService(cfg.Metrics)
 
 	httpServer := httpserver.NewServer(&httpserver.Opts{
 		Config:   cfg.HTTPServer,

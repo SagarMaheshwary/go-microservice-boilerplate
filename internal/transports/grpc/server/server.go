@@ -7,10 +7,7 @@ import (
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/config"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/logger"
-	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/service"
-	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server/handler"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server/interceptor"
-	helloworld "github.com/sagarmaheshwary/go-microservice-boilerplate/proto/hello_world"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc"
@@ -33,20 +30,17 @@ func NewServer(opts *Opts) *GRPCServer {
 	srv := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			interceptor.LoggerInterceptor(opts.Logger),
-			interceptor.MetricsInterceptor(),
+			// Add more interceptors here (e.g., recovery, validation, auth, metrics).
 		),
 		grpc.StatsHandler(otelgrpc.NewServerHandler(
 			otelgrpc.WithTracerProvider(otel.GetTracerProvider()),
 			otelgrpc.WithPropagators(otel.GetTextMapPropagator()),
 		)),
+		// For streaming RPCs, use grpc.ChainStreamInterceptor(...) as well if needed.
 	)
 
-	helloworld.RegisterGreeterServer(srv, handler.NewGreeterServer(
-		service.NewUserService(&service.UserServiceOpts{
-			Database: opts.Database,
-			Cache:    opts.Cache,
-		}),
-	))
+	// Register your gRPC services here, for example:
+	// helloworld.RegisterGreeterServer(srv, handler.NewGreeterServer())
 
 	return &GRPCServer{
 		Server: srv,

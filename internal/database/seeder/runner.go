@@ -11,8 +11,7 @@ type SeederFunc struct {
 }
 
 var defaultSeeders = []SeederFunc{
-	{Name: "SeedUsers", Func: SeedUsers},
-	// Add more seeders here
+	// Register seeders here
 }
 
 type Opts struct {
