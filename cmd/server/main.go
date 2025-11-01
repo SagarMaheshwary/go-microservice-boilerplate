@@ -100,6 +100,8 @@ func main() {
 		log.Error("failed to close tracing client", logger.Field{Key: "error", Value: err.Error()})
 	}
 
+	// Shut down the health server last so it can continue responding to liveness checks
+	// (e.g., /livez) while marking the service as not ready (/readyz) during shutdown.
 	if err := httpServer.Server.Shutdown(ctx); err != nil {
 		log.Error("failed to close http server", logger.Field{Key: "error", Value: err.Error()})
 	}
