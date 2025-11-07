@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"sync/atomic"
 
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/cache"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/database"
@@ -10,6 +11,7 @@ import (
 
 type HealthService interface {
 	Check(ctx context.Context) HealthStatus
+	SetReady(ready bool)
 }
 
 type HealthStatus struct {
@@ -20,6 +22,7 @@ type HealthStatus struct {
 type healthService struct {
 	database *gorm.DB
 	cache    cache.CacheService
+	ready    atomic.Bool
 }
 
 type HealthServiceOpts struct {
@@ -28,13 +31,26 @@ type HealthServiceOpts struct {
 }
 
 func NewHealthService(opts *HealthServiceOpts) HealthService {
-	return &healthService{
+	h := &healthService{
 		database: opts.Database.DB(),
 		cache:    opts.Cache,
 	}
+	h.ready.Store(true)
+	return h
+}
+
+func (h *healthService) SetReady(ready bool) {
+	h.ready.Store(ready)
 }
 
 func (h *healthService) Check(ctx context.Context) HealthStatus {
+	if !h.ready.Load() {
+		return HealthStatus{
+			Status:  "unready",
+			Details: map[string]string{"service": "shutting down"},
+		}
+	}
+
 	status := HealthStatus{Status: "ready", Details: map[string]string{}}
 
 	if err := h.database.Exec("SELECT 1").Error; err != nil {

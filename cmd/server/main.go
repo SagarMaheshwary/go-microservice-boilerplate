@@ -13,6 +13,7 @@ import (
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/logger"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/observability/metrics"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/observability/tracing"
+	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/service"
 	grpcserver "github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server"
 	httpserver "github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/http/server"
 	"google.golang.org/grpc"
@@ -46,6 +47,10 @@ func main() {
 	}
 
 	metricsService := metrics.NewMetricsService(cfg.Metrics)
+	healthService := service.NewHealthService(&service.HealthServiceOpts{
+		Database: db,
+		Cache:    redisCache,
+	})
 
 	httpServer := httpserver.NewServer(&httpserver.Opts{
 		Config:   cfg.HTTPServer,
@@ -53,6 +58,7 @@ func main() {
 		Database: db,
 		Cache:    redisCache,
 		Metrics:  metricsService,
+		Health:   healthService,
 	})
 	go func() {
 		err = httpServer.Serve()
@@ -85,6 +91,9 @@ func main() {
 	<-ctx.Done()
 
 	log.Warn("Shutdown signal received, closing services!")
+
+	// Mark service as not ready
+	healthService.SetReady(false)
 
 	grpcServer.Server.GracefulStop()
 
