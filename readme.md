@@ -225,11 +225,9 @@ Visit [http://localhost:16686](http://localhost:16686), select the service `go-m
 
 ---
 
-✅ That’s it!
 You now have a fully functional example showing:
 
 - gRPC service layer
-- REST health and metrics endpoints
 - Redis caching
 - Prometheus metrics
 - Jaeger tracing
