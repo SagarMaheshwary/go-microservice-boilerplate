@@ -19,6 +19,7 @@ type Opts struct {
 	Database database.DatabaseService
 	Cache    cache.CacheService
 	Metrics  metrics.MetricsService
+	Health   service.HealthService
 }
 
 type HTTPServer struct {
@@ -30,12 +31,8 @@ type HTTPServer struct {
 func NewServer(opts *Opts) *HTTPServer {
 	mux := http.NewServeMux()
 
-	healthService := service.NewHealthService(&service.HealthServiceOpts{
-		Database: opts.Database,
-		Cache:    opts.Cache,
-	})
 	healthHandler := handler.NewHealthHandler(&handler.Opts{
-		HealthService: healthService,
+		HealthService: opts.Health,
 		Logger:        opts.Logger,
 	})
 

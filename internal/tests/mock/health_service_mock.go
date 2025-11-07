@@ -15,3 +15,7 @@ func (m *MockHealthService) Check(ctx context.Context) service.HealthStatus {
 	args := m.Called(ctx)
 	return args.Get(0).(service.HealthStatus)
 }
+
+func (m *MockHealthService) SetReady(isReady bool) {
+	m.Called(isReady)
+}

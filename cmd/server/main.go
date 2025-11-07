@@ -13,6 +13,7 @@ import (
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/logger"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/observability/metrics"
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/observability/tracing"
+	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/service"
 	grpcserver "github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/grpc/server"
 	httpserver "github.com/sagarmaheshwary/go-microservice-boilerplate/internal/transports/http/server"
 	"google.golang.org/grpc"
@@ -45,7 +46,11 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	metricsService := metrics.NewMetricsService(cfg.Metrics, metrics.GRPCMetrics{})
+	metricsService := metrics.NewMetricsService(cfg.Metrics)
+	healthService := service.NewHealthService(&service.HealthServiceOpts{
+		Database: db,
+		Cache:    redisCache,
+	})
 
 	httpServer := httpserver.NewServer(&httpserver.Opts{
 		Config:   cfg.HTTPServer,
@@ -53,6 +58,7 @@ func main() {
 		Database: db,
 		Cache:    redisCache,
 		Metrics:  metricsService,
+		Health:   healthService,
 	})
 	go func() {
 		err = httpServer.Serve()
@@ -86,6 +92,9 @@ func main() {
 
 	log.Warn("Shutdown signal received, closing services!")
 
+	// Mark service as not ready
+	healthService.SetReady(false)
+
 	grpcServer.Server.GracefulStop()
 
 	if err := db.Close(); err != nil {
@@ -100,6 +109,8 @@ func main() {
 		log.Error("failed to close tracing client", logger.Field{Key: "error", Value: err.Error()})
 	}
 
+	// Shut down the health server last so it can continue responding to liveness checks
+	// (e.g., /livez) while marking the service as not ready (/readyz) during shutdown.
 	if err := httpServer.Server.Shutdown(ctx); err != nil {
 		log.Error("failed to close http server", logger.Field{Key: "error", Value: err.Error()})
 	}
