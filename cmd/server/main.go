@@ -84,6 +84,7 @@ func main() {
 	go func() {
 		err = grpcServer.Serve()
 		if err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+			healthService.SetReady(false)
 			stop()
 		}
 	}()
