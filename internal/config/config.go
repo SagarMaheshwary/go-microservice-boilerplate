@@ -34,7 +34,8 @@ type GRPCServer struct {
 }
 
 type HTTPServer struct {
-	URL string `validate:"required,hostname_port"`
+	URL             string        `validate:"required,hostname_port"`
+	ShutdownTimeout time.Duration `validate:"gte=0"`
 }
 
 type Database struct {
@@ -61,8 +62,9 @@ type Metrics struct {
 }
 
 type Tracing struct {
-	ServiceName  string `validate:"required"`
-	CollectorURL string `validate:"required,hostname_port"`
+	ServiceName     string        `validate:"required"`
+	CollectorURL    string        `validate:"required,hostname_port"`
+	ShutdownTimeout time.Duration `validate:"gte=0"`
 }
 
 func NewConfig(log logger.Logger) (*Config, error) {
@@ -101,7 +103,8 @@ func NewConfigWithOptions(opts LoaderOptions) (*Config, error) {
 			URL: getEnv("GRPC_SERVER_URL", ":5000"),
 		},
 		HTTPServer: &HTTPServer{
-			URL: getEnv("HTTP_SERVER_URL", ":4000"),
+			URL:             getEnv("HTTP_SERVER_URL", ":4000"),
+			ShutdownTimeout: getEnvDuration("HTTP_SHUTDOWN_TIMEOUT", 5*time.Second),
 		},
 		Database: &Database{
 			DSN:                 getEnv("DATABASE_DSN", "postgres://postgres:password@localhost:5432/boilerplate?sslmode=disable"),
@@ -124,8 +127,9 @@ func NewConfigWithOptions(opts LoaderOptions) (*Config, error) {
 			EnableDefaultMetrics: getEnvBool("METRICS_ENABLE_DEFAULT_METRICS", false),
 		},
 		Tracing: &Tracing{
-			ServiceName:  getEnv("TRACING_SERVICE_NAME", "go-microservice-boilerplate"),
-			CollectorURL: getEnv("TRACING_COLLECTOR_URL", "localhost:4318"),
+			ServiceName:     getEnv("TRACING_SERVICE_NAME", "go-microservice-boilerplate"),
+			CollectorURL:    getEnv("TRACING_COLLECTOR_URL", "localhost:4318"),
+			ShutdownTimeout: getEnvDuration("TRACING_SHUTDOWN_TIMEOUT", 5*time.Second),
 		},
 	}
 
