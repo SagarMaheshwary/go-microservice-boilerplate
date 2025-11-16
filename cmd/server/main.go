@@ -106,15 +106,19 @@ func main() {
 		log.Error("failed to close cache client", logger.Field{Key: "error", Value: err.Error()})
 	}
 
-	if err := tracerService.Shutdown(ctx); err != nil {
+	tracerCtx, tracerCancel := context.WithTimeout(context.Background(), cfg.Tracing.ShutdownTimeout)
+	if err := tracerService.Shutdown(tracerCtx); err != nil {
 		log.Error("failed to close tracing client", logger.Field{Key: "error", Value: err.Error()})
 	}
+	tracerCancel()
 
 	// Shut down the health server last so it can continue responding to liveness checks
 	// (e.g., /livez) while marking the service as not ready (/readyz) during shutdown.
-	if err := httpServer.Server.Shutdown(ctx); err != nil {
+	httpCtx, httpCancel := context.WithTimeout(context.Background(), cfg.HTTPServer.ShutdownTimeout)
+	if err := httpServer.Server.Shutdown(httpCtx); err != nil {
 		log.Error("failed to close http server", logger.Field{Key: "error", Value: err.Error()})
 	}
+	httpCancel()
 
 	log.Info("Shutdown complete!")
 }
