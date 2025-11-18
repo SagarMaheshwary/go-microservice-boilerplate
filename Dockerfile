@@ -14,7 +14,7 @@ FROM alpine:3.22 AS production
 WORKDIR /app
 COPY --from=builder /app/main .
 
-EXPOSE 5000
+EXPOSE 4000 5000
 CMD ["./main"]
 
 FROM golang:1.25 AS development
@@ -28,5 +28,5 @@ RUN go install github.com/air-verse/air@v1.52.3
 
 COPY . .
 
-EXPOSE 5000
+EXPOSE 4000 5000
 CMD ["air", "-c", ".air.toml"]
