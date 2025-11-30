@@ -248,10 +248,11 @@ A complete working demo is available in the [examples](https://github.com/SagarM
 
 > See the `examples` branch README for setup and usage instructions.
 
-## Tutorial Series
+---
 
-This boilerplate is built as part of the **Go Microservices Boilerplate Series: From Hello World to Production**.
+## Support & Contributions
 
-- [Part 1](https://dev.to/sagarmaheshwary/go-microservices-boilerplate-series-from-hello-world-to-production-part-1-46k5) – Project setup: config, logging, gRPC server, graceful shutdowns, Dockerfile, and Makefile.
-- [Part 2](https://dev.to/sagarmaheshwary/go-microservices-boilerplate-series-from-hello-world-to-production-part-2-428b) – Database integration: Postgres with GORM, migrations, seeders, service layer, and integration tests.
-- [Part 3](https://dev.to/sagarmaheshwary/go-microservices-boilerplate-series-part-3-redis-healthchecks-observability-prometheus-metrics-32jo) – Redis caching, observability (Prometheus metrics + OpenTelemetry tracing), and health checks.
+If you find this project useful, consider giving it a ⭐, it helps others discover it.
+
+Contributions, feedback, and suggestions are always welcome.
+Feel free to open an issue or submit a PR anytime.
