@@ -1,6 +1,8 @@
 package mock
 
 import (
+	"context"
+
 	"github.com/stretchr/testify/mock"
 	"gorm.io/gorm"
 )
@@ -15,6 +17,11 @@ func (m *MockDatabase) DB() *gorm.DB {
 		return db.(*gorm.DB)
 	}
 	return nil
+}
+
+func (m *MockDatabase) Ping(ctx context.Context) error {
+	args := m.Called(ctx)
+	return args.Error(0)
 }
 
 func (m *MockDatabase) Close() error {

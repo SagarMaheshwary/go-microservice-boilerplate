@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/sagarmaheshwary/go-microservice-boilerplate/internal/config"
@@ -12,6 +13,7 @@ import (
 
 type DatabaseService interface {
 	DB() *gorm.DB
+	Ping(ctx context.Context) error
 	Close() error
 }
 
@@ -63,12 +65,24 @@ func NewDatabase(opts *Opts) (DatabaseService, error) {
 	sqlDB.SetConnMaxLifetime(opts.Config.PoolConnMaxLifetime)
 
 	opts.Logger.Info("Database connected", logger.Field{Key: "driver", Value: driver})
-
 	return &Database{db: db, Logger: opts.Logger}, nil
 }
 
 func (d *Database) DB() *gorm.DB {
 	return d.db
+}
+
+func (d *Database) Ping(ctx context.Context) error {
+	sqlDB, err := d.db.DB()
+	if err != nil {
+		return err
+	}
+
+	if err = sqlDB.PingContext(ctx); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (d *Database) Close() error {
