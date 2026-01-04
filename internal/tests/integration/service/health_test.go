@@ -15,9 +15,13 @@ func TestHealthService_Check_Success(t *testing.T) {
 	db := testutils.SetupPostgres(t)
 	redis := testutils.SetupRedis(t)
 
-	svc := service.NewHealthService(&service.HealthServiceOpts{
-		Database: db,
-		Cache:    redis,
+	svc := service.NewHealthService(map[string]service.DependencyHealthCheck{
+		"database": func(ctx context.Context) error {
+			return db.DB().Exec("SELECT 1").Error
+		},
+		"cache": func(ctx context.Context) error {
+			return redis.Ping(ctx)
+		},
 	})
 
 	status := svc.Check(context.Background())
@@ -37,9 +41,13 @@ func TestHealthService_Check_DatabaseDown(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, sqlDB.Close()) // forcibly close connection
 
-	svc := service.NewHealthService(&service.HealthServiceOpts{
-		Database: db,
-		Cache:    redis,
+	svc := service.NewHealthService(map[string]service.DependencyHealthCheck{
+		"database": func(ctx context.Context) error {
+			return db.DB().Exec("SELECT 1").Error
+		},
+		"cache": func(ctx context.Context) error {
+			return redis.Ping(ctx)
+		},
 	})
 
 	status := svc.Check(context.Background())
@@ -57,9 +65,13 @@ func TestHealthService_Check_CacheDown(t *testing.T) {
 	// Simulate broken cache connection by closing redis client
 	require.NoError(t, redis.Close())
 
-	svc := service.NewHealthService(&service.HealthServiceOpts{
-		Database: db,
-		Cache:    redis,
+	svc := service.NewHealthService(map[string]service.DependencyHealthCheck{
+		"database": func(ctx context.Context) error {
+			return db.DB().Exec("SELECT 1").Error
+		},
+		"cache": func(ctx context.Context) error {
+			return redis.Ping(ctx)
+		},
 	})
 
 	status := svc.Check(context.Background())
