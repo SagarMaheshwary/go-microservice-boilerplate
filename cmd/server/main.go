@@ -47,9 +47,13 @@ func main() {
 	}
 
 	metricsService := metrics.NewMetricsService(cfg.Metrics)
-	healthService := service.NewHealthService(&service.HealthServiceOpts{
-		Database: db,
-		Cache:    redisCache,
+	healthService := service.NewHealthService(map[string]service.DependencyHealthCheck{
+		"database": func(ctx context.Context) error {
+			return db.DB().Exec("SELECT 1").Error
+		},
+		"cache": func(ctx context.Context) error {
+			return redisCache.Ping(ctx)
+		},
 	})
 
 	httpServer := httpserver.NewServer(&httpserver.Opts{
