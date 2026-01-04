@@ -49,7 +49,7 @@ func main() {
 	metricsService := metrics.NewMetricsService(cfg.Metrics)
 	healthService := service.NewHealthService(map[string]service.DependencyHealthCheck{
 		"database": func(ctx context.Context) error {
-			return db.DB().Exec("SELECT 1").Error
+			return db.Ping(ctx)
 		},
 		"cache": func(ctx context.Context) error {
 			return redisCache.Ping(ctx)
