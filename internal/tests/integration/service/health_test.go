@@ -17,7 +17,7 @@ func TestHealthService_Check_Success(t *testing.T) {
 
 	svc := service.NewHealthService(map[string]service.DependencyHealthCheck{
 		"database": func(ctx context.Context) error {
-			return db.DB().Exec("SELECT 1").Error
+			return db.Ping(ctx)
 		},
 		"cache": func(ctx context.Context) error {
 			return redis.Ping(ctx)
@@ -43,7 +43,7 @@ func TestHealthService_Check_DatabaseDown(t *testing.T) {
 
 	svc := service.NewHealthService(map[string]service.DependencyHealthCheck{
 		"database": func(ctx context.Context) error {
-			return db.DB().Exec("SELECT 1").Error
+			return db.Ping(ctx)
 		},
 		"cache": func(ctx context.Context) error {
 			return redis.Ping(ctx)
@@ -67,7 +67,7 @@ func TestHealthService_Check_CacheDown(t *testing.T) {
 
 	svc := service.NewHealthService(map[string]service.DependencyHealthCheck{
 		"database": func(ctx context.Context) error {
-			return db.DB().Exec("SELECT 1").Error
+			return db.Ping(ctx)
 		},
 		"cache": func(ctx context.Context) error {
 			return redis.Ping(ctx)
